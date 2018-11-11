@@ -1,19 +1,34 @@
 # pool
 programming object-oriented lua
 
-    Variable privacy is doable, but expensive
+    Variable privacy is do-able, but expensive
     No namespace
     Functions are first class values
-    Extra destructor calls for derived classes
     
 Usage paradigm
 
     class = require('pool')
     myBaseClass = class {
         field = false;
-        [':'] = function (o, v) o.field = v or o.field end; -- constructor
-        [';'] = function (o) end;                           -- destructor
+        ['<'] = function (o, v) o.field = v or o.field end; -- constructor
+        ['>'] = function (o) end;                           -- destructor
+        func1 = function (o, ...) ... end;
     }
-    obj1 = myBaseClass(1)
+    o = myBaseClass(1)
+    o.field = o:func1(...)
     
-For polymorphism:
+For polymorphism/inheritance:
+
+    myChildClass = class {
+        { {myBaseClass}
+            __add = function (o1, o2)
+                local o = class:copy(o1)
+                o.field = o1.field + o2.field
+                return o
+            end;
+        }
+        newfield = false;
+    }
+    o1 = myChildClass(1)
+    o2 = myChildClass(2)
+    print((o1 + o2).field)

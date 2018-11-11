@@ -6,11 +6,12 @@
 local error, tostring, type, setmetatable, rawset =
       error, tostring, type, setmetatable, rawset
 
-local function cloneTbl (src) -- {{{ deep copy the string-key-ed
+local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}
     for k, v in pairs(src) do
-        if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v) or v end
+        if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v, mt and getmetatable(v)) or v end
     end
+    if mt then setmetatable(targ, mt) end
     return targ
 end -- }}}
 
@@ -36,12 +37,10 @@ local function polymorphism (o, mt, ...) -- {{{ constructor for objects
 end -- }}}
 
 local class = { -- {{{
+    id = ''; -- version control
     list = {}; -- class record
     copy = function (c, o) -- duplicate object o
-        local omt = getmetatable(o) or error('bad object', 2)
-        o = cloneTbl(o)
-        setmetatable(o, omt)
-        return o
+        return cloneTbl(o, getmetatable(o) or error('bad object', 2))
     end;
 }
 
@@ -94,7 +93,7 @@ setmetatable(class, {
     end; -- }}}
 }) -- }}}
 
--- {{{ ==================  demo and self-tgest (QA)  =========================
+-- {{{ ==================  demo and self-test (QA)  ==========================
 local base = class {
     value = 1;
     variant = 1;
@@ -111,7 +110,6 @@ local base = class {
 }
 
 local test = class {
-    cvs_id = '$Id: $';
     extra = {};
 
     { -- metatable: inherit class 'base'
@@ -133,7 +131,8 @@ if -- failing conditions:
     or pcall(function () obj2.var = 1 end) -- object making new var
     or pcall(function () obj3['<'] = 1 end) -- object constructor
     or pcall(function () class(1) end) -- bad class declaration
-then error('Class QA failed.', 1) end -- }}}
+then error('Class QA failed.', 1)
+else class.list = {} end -- }}}
 
 return class
 -- ======================================================================== --

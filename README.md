@@ -4,7 +4,7 @@ programming object-oriented lua
     Variable privacy is do-able, but expensive
     No namespace
     Functions are first class values
-    
+
 Usage paradigm
 
     class = require('pool')
@@ -16,17 +16,18 @@ Usage paradigm
     }
     o = myBaseClass(1)
     o.field = o:func1(...)
-    
+
 For polymorphism/inheritance:
 
     myChildClass = class {
-        { {myBaseClass}
-            __add = function (o1, o2)
+        { {myBaseClass};                    -- parent class
+            __add = function (o1, o2)       -- o1 + o2
                 local o = class:copy(o1)
                 o.field = o1.field + o2.field
+                ...
                 return o
             end;
-        }
+        };
         newfield = false;
     }
     o1 = myChildClass(1)

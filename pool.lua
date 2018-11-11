@@ -73,7 +73,7 @@ setmetatable(class, {
         tmpl = cloneTbl(tmpl) -- class template closure
         if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
         if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
-        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'] -- polymorphism and remove reach from object
+        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil -- poly & remove reach from object
         if creator then
             creator.__gc = nil -- disable extra tmpl destructor
             setmetatable(tmpl, creator)

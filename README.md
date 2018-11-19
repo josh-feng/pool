@@ -17,10 +17,13 @@ Usage paradigm
     o = myBaseClass(1)
     o.field = o:func1(...)
 
+    variables are public, and addressed with '.'
+    memeber functions are public, and called with ':'
+
 For polymorphism/inheritance:
 
     myChildClass = class {
-        { {myBaseClass};                    -- parent class
+        { myBaseClass;                      -- parent class
             __add = function (o1, o2)       -- o1 + o2
                 local o = class:copy(o1)
                 o.field = o1.field + o2.field

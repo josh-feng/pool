@@ -1,5 +1,5 @@
 # pool
-programming object-oriented lua
+Poorman's object-oriented lua
 
     Variable privacy is do-able, but expensive
     No namespace
@@ -17,8 +17,8 @@ Usage paradigm
     o = myBaseClass(1)
     o.field = o:func1(...)
 
-    variables are public, and addressed with '.'
-    memeber functions are public, and called with ':'
+    class variables are public, and addressed with '.'
+    class memeber functions are public, and called with ':'
 
 For polymorphism/inheritance:
 
@@ -36,3 +36,7 @@ For polymorphism/inheritance:
     o1 = myChildClass(1)
     o2 = myChildClass(2)
     print((o1 + o2).field)
+
+Project: Alternative Markup Language (AML)
+
+    Syntax:

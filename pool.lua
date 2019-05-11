@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
--- POOL (programming oo lua) 5.1 or later
+-- POOL (Poorman's object-oriented lua)
 -- ======================================================================== --
 -- for efficiency, announce them as local variables
 local error, tostring, type, setmetatable, rawset =
@@ -11,7 +11,7 @@ local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     for k, v in pairs(src) do
         if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v, mt and getmetatable(v)) or v end
     end
-    if mt then setmetatable(targ, mt) end
+    if mt then setmetatable(targ, mt) end -- No trace of src, since object is pretty flat
     return targ
 end -- }}}
 
@@ -39,9 +39,7 @@ end -- }}}
 local class = { -- {{{
     id = ''; -- version control
     list = {}; -- class record
-    copy = function (c, o) -- duplicate object o
-        return cloneTbl(o, getmetatable(o) or error('bad object', 2))
-    end;
+    copy = function (c, o) return cloneTbl(o, getmetatable(o) or error('bad object', 2)) end; -- duplicate object o
 }
 
 function class:new (o, ...) -- {{{

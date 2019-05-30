@@ -37,6 +37,9 @@ For polymorphism/inheritance:
     o2 = myChildClass(2)
     print((o1 + o2).field)
 
-Project: Alternative Markup Language (AML)
+Project: Reduced Markup Language (RML)
 
-    Syntax:
+    Several formats (json, yaml) are not stable and have some drawbacks. We will develop our own.
+    The goal is have a succinct format to break a text into usable fields.
+
+    Syntax: works like punctutaions

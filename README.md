@@ -39,7 +39,7 @@ For polymorphism/inheritance:
 
 Project: Reduced Markup Language (RML)
 
-    Several formats (json, yaml) are not stable and have some drawbacks. We will develop our own.
-    The goal is have a succinct format to break a text into usable fields.
+    Several formats (markdown, json, yaml, etc.) are not stable and have some limitation/drawbacks.
+    We will develop our own.  The goal is have a succinct format to break a text into usable fields.
 
-    Syntax: works like punctutaions
+    Syntax: RML works like punctutaions

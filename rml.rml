@@ -1,0 +1,44 @@
+#rml version=1.0 style=variable:style
+#<[] RML (Reduced Markup Language) Syntax # {{{
+    rml     := '#rml' [blank+ attr1]* '\r' [assign comment]*
+    id      := [A-Za-z0-9_][A-Za-z0-9_:.]*
+    blank   := (' ' | '\t')
+    space   := [blank | '\r']+
+    comment := [space '#' [^\r]*] '\r'
+    tag     := [id] [['|' [attr0 | attr1 ]]* | ('|{' [[attr0 | attr2] comment]* '}')]
+    attr0   := id
+    attr1   := id '=' ndata
+    attr2   := id blank* '=' [blank+ (pdata | sdata)]
+    assign  := blank+ tag ':' [blank+ (pdata | sdata)] [[blank+ ndata]* comment]*
+    pdata   := '<' [id] '[' id ']' .* '[' id ']>'
+    sdata   := '[^']' # skip \' honor escape
+    ndata   := \S+
+#[]> # }}}
+
+style:
+    markup:
+        it: _   # italic
+    attribute:
+        h1: # heder
+        p:  # paragraph
+
+
+|h1: Bakus Naur Form for RML (Reduced Markup Language) # {{{
+|p: # Syntax
+    rml     := '#rml' [blank+ attr1]* '\r' [assign comment]*
+    id      := [A-Za-z0-9_][A-Za-z0-9_:.]*
+    blank   := (' ' | '\t')
+    space   := [blank | '\r']+
+    comment := [space '#' [^\r]*] '\r'
+    tag     := [id] [['|' [attr0 | attr1 ]]* | ('|{' [[attr0 | attr2] comment]* '}')]
+    attr0   := id
+    attr1   := id '=' ndata
+    attr2   := id blank* '=' [blank+ (pdata | sdata)]
+    assign  := blank+ tag ':' [blank+ (pdata | sdata)] [[blank+ ndata]* comment]*
+    pdata   := '<' [id] '[' id ']' .* '[' id ']>'
+    sdata   := '[^']' # skip \' honor escape
+    ndata   := \S+
+|p: # Footnote
+    : string := _any quoted characters_
+# }}}
+# vim: ft=rml ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

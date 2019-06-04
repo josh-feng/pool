@@ -1,19 +1,18 @@
-#rml version=1.0 style=variable:style
-#<[] RML (Reduced Markup Language) Syntax # {{{
-    rml     := '#rml' [blank+ attr1]* '\r' [assign comment]*
-    id      := [A-Za-z0-9_][A-Za-z0-9_:.]*
-    blank   := (' ' | '\t')
-    space   := [blank | '\r']+
-    comment := [space '#' [^\r]*] '\r'
-    tag     := [id] [['|' [attr0 | attr1 ]]* | ('|{' [[attr0 | attr2] comment]* '}')]
+#rml version=1.0 style=tag:style
+#<[] RML (Reduced Markup Language) Syntax # {{{ Regular Expression
+    rml     := '#rml' [blank+ [attr1]]* space
+               [blank* tag ':' [blank+ (pdata | sdata)] [[blank+ (ndata | comment)]* EOL]+]*
+    space   := blank* EOL
+    comment := '#' ([^\r]*' | pdata)
+    tag     := [id] [['|' [attr0 | attr1]]* | ('|{' blank [[attr0 | attr2] [blank+ comment]* EOL]* '}')]*
     attr0   := id
     attr1   := id '=' ndata
     attr2   := id blank* '=' [blank+ (pdata | sdata)]
-    assign  := blank+ tag ':' [blank+ (pdata | sdata)] [[blank+ ndata]* comment]*
     pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-    sdata   := '[^']' # skip \' honor escape
-    ndata   := \S+
+    sdata   := '[^']' . # skip \' honor escape
+    ndata   := [\S]* .
 #[]> # }}}
+# id, blank
 
 style:
     markup:

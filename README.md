@@ -43,3 +43,16 @@ Project: Reduced Markup Language (RML)
     We will develop our own.  The goal is have a succinct format to break a text into usable fields.
 
     Syntax: RML works like punctutaions
+       rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
+       blank   := ' ' | '\t'
+       space   := [blank | '\r']+
+       assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
+       comment := '#' ([^\r]*' '\r' | pdata)
+       prop1   := '|' [attr0 | attr1]
+       prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
+       attr0   := id
+       attr1   := id '=' ndata
+       attr2   := id blank* '=' [blank+ (pdata | sdata)]
+       pdata   := '<' [id] '[' id ']' .* '[' id ']>'
+       sdata   := ['|"] .* ['|"] {C-string}
+       ndata   := \S+ {' \#' is replaced w/ ' #'}

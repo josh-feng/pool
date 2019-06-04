@@ -3,22 +3,21 @@
 " Maintainer:   Josh Feng <joshfwisc@gmail.com>
 " Last Change:  2019 May 07
 " Version: 0.99
-" change log: {{{
-"   TODO hook BNF
+" change log: {{{ TODO hook syntax
 "
-"   rml     := '#rml' [blank+ attr1]* '\r' [assign comment]*
-"   id      := [A-Za-z0-9_][A-Za-z0-9_:.]*
-"   blank   := (' ' | '\t')
+"   rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
+"   blank   := ' ' | '\t'
 "   space   := [blank | '\r']+
-"   comment := [space '#' [^\r]*] '\r'
-"   tag     := [id] [['|' [attr0 | attr1 ]]* | ('|{' [[attr0 | attr2] comment]* '}')]
+"   assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
+"   comment := '#' ([^\r]*' '\r' | pdata)
+"   prop1   := '|' [attr0 | attr1]
+"   prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
 "   attr0   := id
 "   attr1   := id '=' ndata
 "   attr2   := id blank* '=' [blank+ (pdata | sdata)]
-"   assign  := blank+ tag ':' [blank+ (pdata | sdata)] [[blank+ ndata]* comment]*
 "   pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-"   sdata   := '[^']' # skip \' honor escape
-"   ndata   := \S+
+"   sdata   := ['|"] .* ['|"] {C-string}
+"   ndata   := \S+ {' \#' is replaced w/ ' #'}
 "}}}
 
 " quit when a syntax file was already loaded {{{

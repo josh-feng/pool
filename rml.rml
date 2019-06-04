@@ -1,16 +1,18 @@
 #rml version=1.0 style=tag:style
-#<[] RML (Reduced Markup Language) Syntax # {{{ Regular Expression
-    rml     := '#rml' [blank+ [attr1]]* space
-               [blank* tag ':' [blank+ (pdata | sdata)] [[blank+ (ndata | comment)]* EOL]+]*
-    space   := blank* EOL
-    comment := '#' ([^\r]*' | pdata)
-    tag     := [id] [['|' [attr0 | attr1]]* | ('|{' blank [[attr0 | attr2] [blank+ comment]* EOL]* '}')]*
+#<[] RML (Reduced Markup Language) Syntax # {{{ Regular Expression (C-string)
+    rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
+    blank   := ' ' | '\t'
+    space   := [blank | '\r']+
+    assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
+    comment := '#' ([^\r]*' '\r' | pdata)
+    prop1   := '|' [attr0 | attr1]
+    prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
     attr0   := id
     attr1   := id '=' ndata
     attr2   := id blank* '=' [blank+ (pdata | sdata)]
     pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-    sdata   := '[^']' . # skip \' honor escape
-    ndata   := [\S]* .
+    sdata   := ['|"] .* ['|"] {C-string}
+    ndata   := \S+ {' \#' is replaced w/ ' #'}
 #[]> # }}}
 # id, blank
 
@@ -24,20 +26,20 @@ style:
 
 |h1: Bakus Naur Form for RML (Reduced Markup Language) # {{{
 |p: # Syntax
-    rml     := '#rml' [blank+ attr1]* '\r' [assign comment]*
-    id      := [A-Za-z0-9_][A-Za-z0-9_:.]*
-    blank   := (' ' | '\t')
+    rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
+    blank   := ' ' | '\t'
     space   := [blank | '\r']+
-    comment := [space '#' [^\r]*] '\r'
-    tag     := [id] [['|' [attr0 | attr1 ]]* | ('|{' [[attr0 | attr2] comment]* '}')]
+    assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
+    comment := '#' ([^\r]*' '\r' | pdata)
+    prop1   := '|' [attr0 | attr1]
+    prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
     attr0   := id
     attr1   := id '=' ndata
     attr2   := id blank* '=' [blank+ (pdata | sdata)]
-    assign  := blank+ tag ':' [blank+ (pdata | sdata)] [[blank+ ndata]* comment]*
     pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-    sdata   := '[^']' # skip \' honor escape
-    ndata   := \S+
+    sdata   := ['|"] .* ['|"] {C-string}
+    ndata   := \S+ {' \#' is replaced w/ ' #'}
 |p: # Footnote
-    : string := _any quoted characters_
+    : C-string := C style string (_any quoted characters_)
 # }}}
 # vim: ft=rml ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

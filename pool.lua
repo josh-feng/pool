@@ -1,10 +1,11 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
 -- POOL (Poorman's object-oriented lua)
+-- GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
 -- ======================================================================== --
 -- for efficiency, announce them as local variables
-local error, tostring, type, setmetatable, rawset =
-      error, tostring, type, setmetatable, rawset
+local pairs, error, tostring, type, getmetatable, setmetatable, rawset =
+      pairs, error, tostring, type, getmetatable, setmetatable, rawset
 
 local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}

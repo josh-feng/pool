@@ -1,5 +1,5 @@
-# pool
-Poorman's object-oriented lua
+# Pool & RML
+**Poorman's object-oriented lua (Pool)**
 
     Variable privacy is do-able, but expensive
     No namespace
@@ -37,10 +37,10 @@ For polymorphism/inheritance:
     o2 = myChildClass(2)
     print((o1 + o2).field)
 
-Project: Reduced Markup Language (RML)
+**Reduced Markup Language (RML)**
 
-    Several formats (markdown, json, yaml, etc.) are not stable and have some limitation/drawbacks.
-    We will develop our own.  The goal is have a succinct format to break a text into usable fields.
+    Several formats (xml, markdown, json, yaml, etc.) are not stable and/or have some limitations.
+    We will develop our own. The goal is to have a succinct format to break a text into usable fields.
 
     Syntax: RML works like punctutaions
        rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*

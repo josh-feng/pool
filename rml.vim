@@ -37,16 +37,16 @@ syn case match
 syn keyword rmlTodo     contained TODO FIXME XXX
 syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
 syn region  rmlComment  matchgroup=rmlComment fold
-    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="\[\z1\]>"
+    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ contains=rmlTodo,@Spell,@rmlPasteHook
 
 " string
 syn match  rmlSpecial contained #\\[\\abfnrtvz'"]\|\\x[[:xdigit:]]\{2}\|\\[[:digit:]]\{,3}#
 syn match  rmlSpecial contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
 syn region rmlString  nextgroup=rmlComment
-    \ start=+\(:\s\|=\s\)\@<='+ skip=+\\\\\|\\'+ end=+'+ contains=rmlSpecial,@Spell
+    \ start=+\(:\s\+\|=\s\+\)\@<='+ skip=+\\\\\|\\'+ end=+'\(\s\|$\)\@=+ contains=rmlSpecial,@Spell
 syn region rmlString  nextgroup=rmlComment
-    \ start=+\(:\s\|=\s\)\@<="+ skip=+\\\\\|\\"+ end=+"+ contains=rmlSpecial,@Spell
+    \ start=+\(:\s\+\|=\s\+\)\@<="+ skip=+\\\\\|\\"+ end=+"\(\s\|$\)\@=+ contains=rmlSpecial,@Spell
 
 " consume paste and string
 syn match  rmlNormal  +\S*[:=]\s[^ #]+ nextgroup=rmlNormal,rmlTagLine,rmlTagProp,rmlComment
@@ -54,7 +54,8 @@ syn match  rmlError   contained containedin=rmlTagProp +[^ '"#]\S*+
 
 " verbatim block
 syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
-    \ start="\(:\s\+\|=\s\+\)\@<=<\w*\[\z([^\]]*\)\]" end="\[\z1\]>" extend contains=@Spell,@rmlPasteHook
+    \ start="\(:\s\+\|=\s\+\)\@<=<\S*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHook
 
 " attribute
 syn match  rmlAttr    contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1

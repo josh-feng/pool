@@ -54,13 +54,13 @@ syn match  rmlError   contained containedin=rmlTagProp +[^ '"#]\S*+
 
 " verbatim block
 syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
-    \ start="\(:\s\+\|=\s\+\)\@<=<\S*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ start="\(:\s\+\|=\s\+\)\@<=<\i*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
 " attribute
 syn match  rmlAttr    contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1
 syn match  rmlAttrSet contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\(\s\|$\)\@="
-    \ nextgroup=rmlComment,relComArea
+    \ nextgroup=rmlComment
 syn match  rmlAttrVal contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\s*="
     \ nextgroup=rmlPaste,rmlString
 

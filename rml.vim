@@ -54,7 +54,7 @@ syn match  rmlError   contained containedin=rmlTagProp +[^ '"#]\S*+
 
 " verbatim block
 syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
-    \ start="\(:\s\+\|=\s\+\)\@<=<\i*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ start="\(:\s\+\|=\s\+\)\@<=<\z(\i*\)\[\z([^\]]*\)\]" end="\[\z2\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
 " attribute
@@ -93,8 +93,15 @@ hi def link rmlError    Error
 "}}}
 let b:current_syntax = "rml"
 
-" syntax include @Paste   $HOME/.vim/syntax/paste.vim
-" syntax region rmlCdata  contained start="<\w*\[\z([^\]]*\)\]" end="\[\z1\]>" contains=@Paste keepend
+" ------------------  paste hook ------------------"{{{
+unlet b:current_syntax
+" execute 'syntax include @rmlPasteHook '.$VIMRUNTIME.'/syntax/'.s:paste.'.vim'
+" syn include @rmlPasteHook   $VIMRUNTIME/syntax/lua.vim
+syn include @rmlPasteHookLua   $VIMRUNTIME/syntax/lua.vim
+syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(:\s\+\|=\s\+\)\@<=<lua\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHookLua
+" ------------------  paste hook ------------------"}}}
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

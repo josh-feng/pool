@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 -- ======================================================================== --
 -- POOL (Poorman's object-oriented lua)
--- GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+-- MIT License Copyright (c) 2019 Josh Feng
 -- ======================================================================== --
 -- for efficiency, announce them as local variables
 local pairs, error, tostring, type, getmetatable, setmetatable, rawset =

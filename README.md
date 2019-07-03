@@ -1,9 +1,9 @@
 # Pool & RML
 **Poorman's object-oriented lua (Pool)**
 
-    Variable privacy is do-able, but expensive
+    Class variable privacy is do-able, but expensive
     No namespace
-    Functions are first class values
+    Class member functions are first class values
 
 Usage paradigm
 
@@ -43,16 +43,20 @@ For polymorphism/inheritance:
     We will develop our own. The goal is to have a succinct format to break a text into usable fields.
 
     Syntax: RML works like punctutaions
-       rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
-       blank   := ' ' | '\t'
-       space   := [blank | '\r']+
-       assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
-       comment := '#' ([^\r]*' '\r' | pdata)
-       prop1   := '|' [attr0 | attr1]
-       prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
-       attr0   := id
-       attr1   := id '=' ndata
-       attr2   := id blank* '=' [blank+ (pdata | sdata)]
-       pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-       sdata   := ['|"] .* ['|"] {C-string}
-       ndata   := \S+ {' \#' is replaced w/ ' #'}
+      rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
+      blank   := ' ' | '\t'
+      space   := [blank | '\r']+
+      assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
+      comment := '#' ([^\r]*' '\r' | pdata)
+      prop1   := '|' [attr0 | attr1]
+      prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
+      attr0   := id
+      attr1   := id '=' ndata
+      attr2   := id blank* '=' [blank+ (pdata | sdata)]
+      pdata   := '<' [id] '[' id ']' .* '[' id ']>'
+      sdata   := ['|"] .* ['|"] {C-string}
+      ndata   := \S+ {' \#' is replaced w/ ' #'}
+
+    lsrml.lua provide a basic/simple lua script to parse an RML file,
+    it can be translate to C/C++ lib for efficiency.
+    With lsrml.lua, the script lom.lua provide a sample lua object model builder for RML file

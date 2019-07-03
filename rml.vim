@@ -2,9 +2,8 @@
 " Language: Reduced Markup Language
 " Maintainer:   Josh Feng <joshfwisc@gmail.com>
 " Last Change:  2019 May 07
-" Version: 0.99
-" change log: {{{ TODO hook syntax
-"
+" Version: 1.00
+" change log: {{{
 "   rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
 "   blank   := ' ' | '\t'
 "   space   := [blank | '\r']+
@@ -41,33 +40,33 @@ syn region  rmlComment  matchgroup=rmlComment fold
     \ contains=rmlTodo,@Spell,@rmlPasteHook
 
 " string
-syn match  rmlSpecial contained #\\[\\abfnrtvz'"]\|\\x[[:xdigit:]]\{2}\|\\[[:digit:]]\{,3}#
-syn match  rmlSpecial contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
-syn region rmlString  nextgroup=rmlComment
-    \ start=+\(:\s\+\|=\s\+\)\@<='+ skip=+\\\\\|\\'+ end=+'\(\s\|$\)\@=+ contains=rmlSpecial,@Spell
-syn region rmlString  nextgroup=rmlComment
-    \ start=+\(:\s\+\|=\s\+\)\@<="+ skip=+\\\\\|\\"+ end=+"\(\s\|$\)\@=+ contains=rmlSpecial,@Spell
+syn match   rmlSpecial  contained #\\[\\abfnrtvz'"]\|\\x[[:xdigit:]]\{2}\|\\[[:digit:]]\{,3}#
+syn match   rmlSpecial  contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
+syn region  rmlString   nextgroup=rmlComment
+    \ start=+\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<='+ skip=+\\\\\|\\'+ end=+'\(\s\|$\)\@=+
+    \ contains=rmlSpecial,@Spell
+syn region  rmlString   nextgroup=rmlComment
+    \ start=+\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<="+ skip=+\\\\\|\\"+ end=+"\(\s\|$\)\@=+
+    \ contains=rmlSpecial,@Spell
 
 " consume paste and string
-syn match  rmlNormal  +\S*[:=]\s[^ #]+ nextgroup=rmlNormal,rmlTagLine,rmlTagProp,rmlComment
-syn match  rmlError   contained containedin=rmlTagProp +[^ '"#]\S*+
+syn match   rmlNormal   +\S*[:=]\s[^ #]+ nextgroup=rmlNormal,rmlTagLine,rmlTagProp,rmlComment
+syn match   rmlError    contained containedin=rmlTagProp +[^ '"#]\S*+
 
 " verbatim block
-syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
-    \ start="\(:\s\+\|=\s\+\)\@<=<\z(\i*\)\[\z([^\]]*\)\]" end="\[\z2\]>\(\s\|$\)\@="
+syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\z(\i*\)\[\z([^\]]*\)\]" end="\[\z2\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
 " attribute
-syn match  rmlAttr    contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1
-syn match  rmlAttrSet contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\(\s\|$\)\@="
-    \ nextgroup=rmlComment
-syn match  rmlAttrVal contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\s*="
-    \ nextgroup=rmlPaste,rmlString
+syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1
+syn match   rmlAttrSet  contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\(\s\|$\)\@=" nextgroup=rmlComment
+syn match   rmlAttrVal  contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\s*=" nextgroup=rmlPaste,rmlString
 
 " tag: see cindent
-syn match  rmlTagLine keepend +^\s*\S*:\(\s\|$\)\@=+ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
-syn region rmlTagProp keepend matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
-    \ start="^\s*[^ |{]*|{\(\s\|$\)\@=" end="\s*}:\(\s\|$\)\@="
+syn match   rmlTagLine  keepend +^\s*\S*:\(\s\|$\)\@=+ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
+syn region  rmlTagProp  keepend matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
+    \ start="^\s*[^ |{]*|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
     \ contains=ALLBUT,rmlTagLine,rmlTagProp,rmlAttr
 
 " The default highlighting."{{{
@@ -97,10 +96,16 @@ let b:current_syntax = "rml"
 unlet b:current_syntax
 " execute 'syntax include @rmlPasteHook '.$VIMRUNTIME.'/syntax/'.s:paste.'.vim'
 " syn include @rmlPasteHook   $VIMRUNTIME/syntax/lua.vim
-syn include @rmlPasteHookLua   $VIMRUNTIME/syntax/lua.vim
-syn region rmlPaste   matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
-    \ start="\(:\s\+\|=\s\+\)\@<=<lua\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+syn include @rmlPasteHookLua $VIMRUNTIME/syntax/lua.vim
+syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<lua\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookLua
+
+unlet b:current_syntax
+syn include @rmlPasteHookTex $VIMRUNTIME/syntax/tex.vim
+syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<tex\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHookTex
 " ------------------  paste hook ------------------"}}}
 
 let &cpo = s:cpo_save

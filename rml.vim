@@ -36,7 +36,7 @@ syn case match
 syn keyword rmlTodo     contained TODO FIXME XXX
 syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
 syn region  rmlComment  matchgroup=rmlComment fold
-    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="#\[\z1\]>.*$"
     \ contains=rmlTodo,@Spell,@rmlPasteHook
 
 " string
@@ -65,9 +65,9 @@ syn match   rmlAttrVal  contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\
 
 " tag: see cindent
 syn match   rmlTagLine  keepend +^\s*\S*:\(\s\|$\)\@=+ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
-syn region  rmlTagProp  keepend matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
+syn region  rmlTagProp  matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
     \ start="^\s*[^ |{]*|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
-    \ contains=ALLBUT,rmlTagLine,rmlTagProp,rmlAttr
+    \ extend contains=ALLBUT,rmlTagLine,rmlTagProp,rmlAttr
 
 " The default highlighting."{{{
 " highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
@@ -106,6 +106,12 @@ syn include @rmlPasteHookTex $VIMRUNTIME/syntax/tex.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<tex\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookTex
+
+unlet b:current_syntax
+syn include @rmlPasteHookCpp $VIMRUNTIME/syntax/cpp.vim
+syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<cpp\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHookCpp
 " ------------------  paste hook ------------------"}}}
 
 let &cpo = s:cpo_save

@@ -25,44 +25,39 @@ local lrp = require('pool') { -- linux rml parser
     seal = false;
     indn = false; -- indentation
     quot = false; -- quotation mark q or qq
-    setk = false; --
+    setk = false;
 
     ['<'] = function (o, callbacktbl) -- {{{
         if type(callbacktbl) == 'table' then
             o.StartTag = callbacktbl.StartTag or o.StartTag
             o.EndTag   = callbacktbl.EndTag   or o.EndTag
             o.Data     = callbacktbl.Data     or o.Data
-            o.State    = callbacktbl.State    or o.State
             o.Paste    = callbacktbl.Paste    or o.Paste
             o.String   = callbacktbl.String   or o.String
-            o.Comment  = callbacktbl.Comment  or o.Comment
         end
         o.spec = {tab = 4; ver = '1.0'}
     end; -- }}}
 
-    ['>'] = function (o) -- {{{
-        -- o:close()
-        o.spec = nil
-        o.tags = nil
-        o.data = nil
-    end; -- }}}
+    ['>'] = function (o) o:close() end;
 
     -- pseudo member functions for callbacks
-    StartTag = function (o, name, ind, attr) end;
-    EndTag   = function (o, name) end;
-    Data     = function (o, s) end;
-    State    = function (o) return o.mode end;
-    Paste    = function (o, s, hint, seal) return s end;
-    String   = function (o, s) return s end;
-    Comment  = function (o, s) end;
+    StartTag = function (o, name, ind, attr) print('StartTag:', name, ind, attr) end;
+    EndTag   = function (o, name)            print('EndTag:', name) end;
+    Data     = function (o, s)               print('Data:', s) end;
+    Paste    = function (o, s, hint, seal)   print('Paste:', s, hint, seal) return s end;
+    String   = function (o, s)               print('String:', s) return s end;
 
-    close = function (o) -- close and validation
-        o.spec = nil
-        o.tags = nil
-        o.data = nil
-    end;
+    close = function (o) -- close and validation -- {{{
+        if o.data and (#o.tags > 0) then
+            o:Data(type(o.data) == 'table' and table.concat(o.data, ' ') or o.data)
+            while #o.tags > 0 do
+                o:EndTag(o.tags[#(o.tags)])
+                table.remove(o.tags)
+            end
+        end
+    end; -- }}}
 
-    parse = function (o, rml)
+    parse = function (o, rml) -- {{{
         local l, c, p, msg = 0 -- message, line, column, position
         for line in string.gmatch(rml, '[^\n]*') do -- {{{
             o.seek = true
@@ -78,16 +73,16 @@ local lrp = require('pool') { -- linux rml parser
                             if k and v then o.spec[k] = v end
                         end
                         o.spec.tab = tonumber(o.spec.tab) or 0
-                        if o.spec.tab <= 0 then msg = 'Error setting: tab' end
-                        if o.spec.ver ~= '1.0' then msg = 'Error setting: ver' end
+                        if o.spec.tab <= 0 then msg = 'setting: tab' end
+                        if o.spec.ver ~= '1.0' then msg = 'setting: ver' end
                         o.tags = {}
                         line = nil
                     else
                         msg = 'Not a RML document'
                     end -- }}}
-                elseif o.quot then -- closing string {{{
+                elseif o.quot then -- string {{{
                     t, d = o.quot..' ', string.gsub(line, '\\'..o.quot, '\n')..' '
-                    if string.find(d, t) then
+                    if string.find(d, t) then -- closing
                         d, line = string.match(d, '(.-)'..t..'(.-)%s?$')
                         table.insert(o.data, (string.gsub(d, '\n', '\\'..o.quot)))
                         o.data = o:String(table.concat(o.data, '\n'))
@@ -98,10 +93,10 @@ local lrp = require('pool') { -- linux rml parser
                         table.insert(o.data, line)
                         line = nil
                     end -- }}}
-                elseif o.seal then -- closing paste -- {{{
+                elseif o.seal then -- paste -- {{{
                     if o.hint then
                         d = line..' '
-                        if string.find(d, '%['..o.seal..'%]> ') then
+                        if string.find(d, '%['..o.seal..'%]> ') then -- closing
                             d, line = string.match(d, '^(.-)%['..o.seal..'%]>%s(.*)')
                             table.insert(o.data, d)
                             o.data = o:Paste(table.concat(o.data, '\n'), o.hint, o.seal)
@@ -111,88 +106,103 @@ local lrp = require('pool') { -- linux rml parser
                             table.insert(o.data, line)
                             line = nil
                         end
-                    else
+                    else -- comment
                         if string.find(line, '#%['..o.seal..'%]>') then o.seal = false end
                         line = nil
                     end -- }}}
-                elseif string.find(line, '%S') then -- non empty
+                elseif string.find(line, '%S') then -- non empty -- {{{
                     s, t, d = string.match(line, '^(%s*)(%S+)(.*)')
                     if string.sub(t, 1, 1) == '#' then -- {{{ comment
-                        o.hint, o.seal = string.match(t, '#<([^%[]*)%[([^%]]*)%]')
-                        if o.seal then o.hint = false end
-                        line = nil -- }}}
+                        o.hint, o.seal, d = string.match(t, '^%s*#<([^%[]*)%[([^%]]*)%](.*)')
+                        if o.seal then o.hint = false ; line = d else line = nil end -- }}}
                     else -- attr or tags -- {{{
                         if o.seek then -- {{{ seek tag
                             if o.attr then -- {{{
+                                if o.setk then o.attr[o.setk] = o.data or '' end
                                 if string.find(t, "=$") or string.find(d, "^%s+=") then
                                     o.setk = string.match(t, "[^=]*")
-                                    o.attr[o.setk] = ''
+                                    table.insert(o.attr, o.setk)
                                     line = string.match(d, "%s*=?%s*(.*)")
+                                    o.data = false
                                 else
-                                    if t == '}:$' then
-                                        o:StartTag(o.tags, o.indn, o.attr)
+                                    if t == '}:' then
+                                        o:StartTag(o.tags[#o.tags], o.indn, o.attr)
                                         o.attr = false
                                         o.data = false
                                     else
                                         table.insert(o.attr, t)
+                                        o.data = '' -- true
                                     end
-                                    o.seek = false
+                                    o.setk = false
                                     line = d
                                 end -- }}}
-                            elseif string.find(t, ':$') then -- tag -- {{{
-                                print(l, t, '('..d..')')
-                                if #(o.tags) > 0 then o:EndTag(o.tags[#(o.tags)]) ; table.remove(o.tags) end
-                                o.indn = string.len(s) / o.spec.tab
-                                o.setk = string.match(t, '^(.*):$')
-                                o.data = false
                                 o.seek = false
-                                line = d -- }}}
+                            elseif string.find(t, ':$') then -- tag -- {{{
+                                if string.len(s) % o.spec.tab == 0 then
+                                    if o.data and (#o.tags > 0) then
+                                        o:Data(type(o.data) == 'table' and table.concat(o.data, ' ') or o.data)
+                                    end
+                                    o.indn = math.ceil(string.len(s) / o.spec.tab)
+                                    while o.indn < #o.tags do o:EndTag(o.tags[#(o.tags)]) table.remove(o.tags) end
+                                    o.attr = {}
+                                    t = string.match(t, '(.*):$')
+                                    for _ in string.gmatch(t, '([^|]*)') do table.insert(o.attr, _) end
+                                    table.insert(o.tags, o.attr[1] or '')
+                                    o:StartTag(o.tags[#o.tags], o.indn, o.attr)
+                                    o.attr = false
+                                    o.data = false
+                                    o.seek = false
+                                    line = d
+                                else
+                                    msg = 'indentation'
+                                end -- }}}
                             elseif string.find(t, '|{$') then -- attr -- {{{
-                                print(l, t, '('..d..')')
-                                o.setk = string.match(t, '^(.*)|{$')
-                                o.attr = {}
-                                line = d
+                                if string.len(s) % o.spec.tab == 0 then
+                                    if o.data and (#o.tags > 0) then
+                                        o:Data(type(o.data) == 'table' and table.concat(o.data, ' ') or o.data)
+                                    end
+                                    o.indn = math.ceil(string.len(s) / o.spec.tab)
+                                    while o.indn < #o.tags do o:EndTag(o.tags[#(o.tags)]) table.remove(o.tags) end
+                                    table.insert(o.tags, string.match(t, '^(.*)|{$'))
+                                    o.data = false
+                                    o.attr = {}
+                                    line = d
+                                else
+                                    msg = 'indentation'
+                                end
                             end -- }}}
                         end -- }}}
 
-                        if not string.find(line, '%S') then -- {{{
+                        if msg or not string.find(line, '%S') then -- {{{
                             line = nil -- }}}
-                        elseif o.setk then
+                        else -- {{{ search for data: string and paste first once
                             if not o.data then -- regular data -- {{{
                                 o.quot, d = string.match(line, '^%s*(["\'])(.*)')
-                                if o.quot then -- {{{
-                                    o.data = {d}
-                                    line = nil
-                                    o.seek = false -- }}}
-                                else -- {{{
-                                    o.hint, o.seal, d = string.match(line, '<([^%[]*)%[([^%]]*)%](.*)')
-                                    if o.seal then
-                                        o.data = {d}
-                                        line = nil
-                                    end
+                                if not o.quot then -- {{{
+                                    o.hint, o.seal, d = string.match(line, '^%s*<([^%[]*)%[([^%]]*)%](.*)')
                                 end -- }}}
                             end -- }}}
-                            if line then -- {{{
+                            if o.quot or o.seal then -- {{{
+                                o.data = {}
+                                line = d
+                                o.seek = false -- }}}
+                            else -- {{{ retular data
                                 t, d = string.match(line, '^(.-)%s(#.*)')
-                                if t then -- {{{
-                                    if t == '' then t = nil end
-                                    line = d
-                                else
-                                    t = line
-                                    line = nil
-                                end -- }}}
-                                if o.attr and o.data then -- {{{
-                                    msg = 'ERR: attr'
-                                elseif type(o.data) == 'table' then
-                                    table.insert(o.data, line)
-                                else
-                                    o.data = {o.data, line}
-                                end -- }}}
+                                if not t then t = line end
+                                line = d
+                                if string.find(t, '%S') then
+                                    t = string.gsub(string.match(t, '(%S.-)%s*$'), '%s+', ' ')
+                                    if o.attr and o.data then -- {{{
+                                        msg = 'attr'
+                                    elseif type(o.data) == 'table' then
+                                        table.insert(o.data, t)
+                                    else
+                                        o.data = o.data and {o.data, t} or t
+                                    end -- }}}
+                                end
                             end -- }}}
-                        else -- {{{
-                            msg = line
                         end -- }}}
-                    end -- }}}
+                    end -- }}} -- }}}
                 else -- empty line -- {{{
                     line = nil
                 end -- }}}
@@ -200,9 +210,9 @@ local lrp = require('pool') { -- linux rml parser
             if msg then break end
         end -- }}}
         -- return status, msg, line, col, pos = lrp:parse(txt) -- passed nil if failed
-        if msg then print('MSG ', msg) end
+        if msg then print('ERR '..msg) end
         return msg == nil, msg, l, c, p -- passed nil if failed
-    end;
+    end; -- }}}
 }
 -- {{{ ==================  demo and self-test (QA)  ==========================
 if not lrp():parse([[#rml ver=1.0 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=file1
@@ -243,7 +253,7 @@ encoded: #
 |h1: 魔鬼
     |f1: 已婚男士
 : 搭訕。
-: 這樣追孩真的很容易
+: 這樣追孩真的很           容易
     author|f1: 魔鬼 著
 : 以下是我2006年搭仙的統計數據 :
     : 約出來見面35人
@@ -252,7 +262,8 @@ encoded: #
 |p:
     : 搭訕場景 : 商場、街頭、校園、地錢. 酒吧從來不去，成本太高，
 
-123]])
+123              3      5
+124]])
 then error('RML QA failed.', 1) end
 -- }}}
 return lrp -- lua object model

@@ -32,13 +32,6 @@ syn case match
 "syn sync minlines=100
 "}}}
 
-" comment
-syn keyword rmlTodo     contained TODO FIXME XXX
-syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
-syn region  rmlComment  matchgroup=rmlComment fold
-    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="#\[\z1\]>.*$"
-    \ contains=rmlTodo,@Spell,@rmlPasteHook
-
 " string
 syn match   rmlSpecial  contained #\\[\\abfnrtvz'"]\|\\x[[:xdigit:]]\{2}\|\\[[:digit:]]\{,3}#
 syn match   rmlSpecial  contained #\\[\\abfnrtv'"[\]]\|\\[[:digit:]]\{,3}#
@@ -60,14 +53,24 @@ syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
 
 " attribute
 syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1
-syn match   rmlAttrSet  contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\(\s\|$\)\@=" nextgroup=rmlComment
-syn match   rmlAttrVal  contained containedin=rmlTagProp "\(^\||{\)\@<=\s*\I\i*\s*=" nextgroup=rmlPaste,rmlString
+syn match   rmlAttrSet  contained containedin=rmlTagProp
+    \ "\(^\||{\)\@<=\s*\(\*\|&\)\?\I\i*\(\s\|$\)\@=" nextgroup=rmlComment
+syn match   rmlAttrVal  contained containedin=rmlTagProp
+    \ "\(^\||{\)\@<=\s*\(\*\|&\)\?\I\i*\s*=" nextgroup=rmlPaste,rmlString
 
 " tag: see cindent
-syn match   rmlTagLine  keepend +^\s*\S*:\(\s\|$\)\@=+ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
+syn match   rmlTagLine  keepend +^\s*\(\(\i\||\)\S*\)\?:\(\s\|$\)\@=+
+    \ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
 syn region  rmlTagProp  matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
-    \ start="^\s*[^ |{]*|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
+    \ start="^\s*\(\i[^ |{]*\)\?|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
     \ extend contains=ALLBUT,rmlTagLine,rmlTagProp,rmlAttr
+
+" comment
+syn keyword rmlTodo     contained TODO FIXME XXX
+syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
+syn region  rmlComment  matchgroup=rmlComment fold
+    \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="#\[\z1\]>.*$"
+    \ contains=rmlTodo,@Spell,@rmlPasteHook
 
 " The default highlighting."{{{
 " highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue

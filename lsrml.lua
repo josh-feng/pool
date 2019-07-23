@@ -35,17 +35,17 @@ local lrp = require('pool') { -- linux rml parser
             o.Paste    = callbacktbl.Paste    or o.Paste
             o.String   = callbacktbl.String   or o.String
         end
-        o.spec = {tab = 4; ver = '1.0'}
+        o.spec = {tab = 4; ver = 1} --
     end; -- }}}
 
     ['>'] = function (o) o:close() end;
 
     -- pseudo member functions for callbacks
-    StartTag = function (o, name, ind, attr) print('StartTag:', name, ind, attr) end;
-    EndTag   = function (o, name)            print('EndTag:', name) end;
-    Data     = function (o, s)               print('Data:', s) end;
-    Paste    = function (o, s, hint, seal)   print('Paste:', s, hint, seal) return s end;
-    String   = function (o, s)               print('String:', s) return s end;
+    StartTag = function (o, name, ind, attr) o:debug('StartTag:', name, ind, attr) end;
+    EndTag   = function (o, name)            o:debug('EndTag:', name)              end;
+    Data     = function (o, s)               o:debug('Data:', s)                   end;
+    Paste    = function (o, s, hint, seal)   o:debug('Paste:', s, hint, seal)      return s end;
+    String   = function (o, s)               o:debug('String:', s)                 return s end;
 
     close = function (o) -- close and validation -- {{{
         if o.data and (#o.tags > 0) then
@@ -56,13 +56,16 @@ local lrp = require('pool') { -- linux rml parser
             end
         end
     end; -- }}}
+    debug = function (o, ...) -- {{{
+        print(...)
+    end; -- }}}
 
     parse = function (o, rml) -- {{{
         local l, c, p, msg = 0 -- message, line, column, position
         for line in string.gmatch(rml, '[^\n]*') do -- {{{
             o.seek = true
             l = l + 1
-            print(l, line) -- debug
+            o:debug(l, line) -- debug
             local s, t, d -- space, tag, data
             repeat -- {{{
                 if not o.tags then -- #rml [var=val]* -- {{{ tab:version:style:stamp
@@ -74,7 +77,6 @@ local lrp = require('pool') { -- linux rml parser
                         end
                         o.spec.tab = tonumber(o.spec.tab) or 0
                         if o.spec.tab <= 0 then msg = 'setting: tab' end
-                        if o.spec.ver ~= '1.0' then msg = 'setting: ver' end
                         o.tags = {}
                         line = nil
                     else
@@ -121,17 +123,27 @@ local lrp = require('pool') { -- linux rml parser
                                 if o.setk then o.attr[o.setk] = o.data or '' end
                                 if string.find(t, "=$") or string.find(d, "^%s+=") then
                                     o.setk = string.match(t, "[^=]*")
-                                    table.insert(o.attr, o.setk)
-                                    line = string.match(d, "%s*=?%s*(.*)")
-                                    o.data = false
+                                    if string.match(o.setk, '^%S+$') then -- TODO
+                                        table.insert(o.attr, o.setk)
+                                        line = string.match(d, "%s*=?%s*(.*)")
+                                        o.data = false
+                                    else
+                                        msg = 'wrong attribute name'
+                                        line = nil
+                                    end
                                 else
                                     if t == '}:' then
                                         o:StartTag(o.tags[#o.tags], o.indn, o.attr)
                                         o.attr = false
                                         o.data = false
                                     else
-                                        table.insert(o.attr, t)
-                                        o.data = '' -- true
+                                        if string.match(t, '^%S+$') then -- TODO
+                                            table.insert(o.attr, t)
+                                            o.data = '' -- true
+                                        else
+                                            msg = 'wrong attribute'
+                                            line = nil
+                                        end
                                     end
                                     o.setk = false
                                     line = d
@@ -147,12 +159,18 @@ local lrp = require('pool') { -- linux rml parser
                                     o.attr = {}
                                     t = string.match(t, '(.*):$')
                                     for _ in string.gmatch(t, '([^|]*)') do table.insert(o.attr, _) end
-                                    table.insert(o.tags, o.attr[1] or '')
-                                    o:StartTag(o.tags[#o.tags], o.indn, o.attr)
-                                    o.attr = false
-                                    o.data = false
-                                    o.seek = false
-                                    line = d
+                                    if string.match(o.attr[1], '^%S*$') then -- TODO
+                                        table.insert(o.tags, o.attr[1] or '')
+                                        table.remove(o.attr, 1)
+                                        o:StartTag(o.tags[#o.tags], o.indn, o.attr)
+                                        o.attr = false
+                                        o.data = false
+                                        o.seek = false
+                                        line = d
+                                    else
+                                        msg = 'wrong tag name'
+                                        line = nil
+                                    end
                                 else
                                     msg = 'indentation'
                                 end -- }}}
@@ -163,10 +181,16 @@ local lrp = require('pool') { -- linux rml parser
                                     end
                                     o.indn = math.ceil(string.len(s) / o.spec.tab)
                                     while o.indn < #o.tags do o:EndTag(o.tags[#(o.tags)]) table.remove(o.tags) end
-                                    table.insert(o.tags, string.match(t, '^(.*)|{$'))
-                                    o.data = false
-                                    o.attr = {}
-                                    line = d
+                                    t = string.match(t, '^(.*)|{$')
+                                    if string.match(t, '^%S*$') then -- TODO no |
+                                        table.insert(o.tags, t)
+                                        o.data = false
+                                        o.attr = {}
+                                        line = d
+                                    else
+                                        msg = 'wrong tag name for attr'
+                                        line = nil
+                                    end
                                 else
                                     msg = 'indentation'
                                 end
@@ -191,7 +215,8 @@ local lrp = require('pool') { -- linux rml parser
                                 if not t then t = line end
                                 line = d
                                 if string.find(t, '%S') then
-                                    t = string.gsub(string.match(t, '(%S.-)%s*$'), '%s+', ' ')
+                                    t = string.gsub(string.gsub(string.match(t, '(%S.-)%s*$'), '%s+', ' '),
+                                        '\\#', '#')
                                     if o.attr and o.data then -- {{{
                                         msg = 'attr'
                                     elseif type(o.data) == 'table' then
@@ -215,55 +240,42 @@ local lrp = require('pool') { -- linux rml parser
     end; -- }}}
 }
 -- {{{ ==================  demo and self-test (QA)  ==========================
-if not lrp():parse([[#rml ver=1.0 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=file1
-    #<[ab] test
-    # another test
-    #[ab]>
+if not lrp():parse([[#rml ver=1.0 tab=4 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
+  #<[]comment start
+  #[]>comment end
 
-#
-style: "html" and another # {{{
-    h1: # header 1
-    h2: # header 2
-    f1: font=3 color=4 # footnote 1
-    atest|{  # comment
-        test # test
-        test = " test" #<[] test
-        #[]>
-        test = " test "
-        abce #<[] test and all
-            test not
-        #[]>
-        test = <test[]
-            est test
-            # est
-        []>
-        all = "is good = # "
-        }: test
-    : a: "" test: <and[] # test and # }}}
+style: "html" default # {{{
+    h1: fn=5          # header 1
+    h2: fn=4          # header 2
+    f1: fn=3 color=4  # footnote 1
+        numbering: roman    # i, ii, ...
+    # }}}
+doc1:
+    title|h1: self test
+    footnote|f1: #
+        <tex[seal1]
+\[
+    1 + \exp^{i \pi} \;\;=\;\; 0
+\]
+    [seal1]> shows in the "footnote" section # no need to escape char like \"
 
-encoded: #
-    <lua[]
-    <test status="test" and=""> </test>
-    -- continue of the text
-    |encoded: # self reference
-[]>
-    continue of the text
-    : # self reference
-
-|h1: 魔鬼
-    |f1: 已婚男士
-: 搭訕。
-: 這樣追孩真的很           容易
-    author|f1: 魔鬼 著
-: 以下是我2006年搭仙的統計數據 :
-    : 約出來見面35人
-    : 發展成好朋友的16個
-
-|p:
-    : 搭訕場景 : 商場、街頭、校園、地錢. 酒吧從來不去，成本太高，
-
-123              3      5
-124]])
+    chapter|http://link/to/other/file/var|&id: # setting id
+    chapter|{ # comment
+        *id   #<[]
+              handling id depends on dom
+              #[]> whole line in comment
+        fn = "4" #
+        fs = <test[]
+        []> # string or paste do not allow extra regular data
+        }: example text
+        : "" "item 1" test: <and[]# test and # comment part
+            footnote|f1: another footnote
+        : \#
+doc2|h2:
+    |p:
+        :
+    |p:
+regular "data]])
 then error('RML QA failed.', 1) end
 -- }}}
 return lrp -- lua object model

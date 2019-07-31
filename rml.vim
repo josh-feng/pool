@@ -52,10 +52,10 @@ syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
     \ extend contains=@Spell,@rmlPasteHook
 
 " attribute
-syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1
+syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1 contains=rmlAssign
 syn match   rmlAttrSet  contained containedin=rmlTagProp
     \ "\(^\||{\)\@<=\s*\(\*\|&\)\?\I\i*\(\s\|$\)\@=" nextgroup=rmlComment
-syn match   rmlAttrVal  contained containedin=rmlTagProp
+syn match   rmlAttrVal  contained containedin=rmlTagProp contains=rmlAssign
     \ "\(^\||{\)\@<=\s*\(\*\|&\)\?\I\i*\s*=" nextgroup=rmlPaste,rmlString
 
 " tag: see cindent
@@ -63,7 +63,7 @@ syn match   rmlTagLine  keepend +^\s*\(\(\i\||\)\S*\)\?:\(\s\|$\)\@=+
     \ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
 syn region  rmlTagProp  matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
     \ start="^\s*\(\i[^ |{]*\)\?|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
-    \ extend contains=ALLBUT,rmlTagLine,rmlTagProp,rmlAttr
+    \ extend contains=ALLBUT,rmlTagLine,rmlTagProp
 
 " comment
 syn keyword rmlTodo     contained TODO FIXME XXX
@@ -71,6 +71,8 @@ syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
 syn region  rmlComment  matchgroup=rmlComment fold
     \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="#\[\z1\]>.*$"
     \ contains=rmlTodo,@Spell,@rmlPasteHook
+
+syn match   rmlAssign  +=+ contained containedin=rmlTagLine,rmlTagProp,rmlAttVal
 
 " The default highlighting."{{{
 " highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
@@ -84,8 +86,7 @@ hi def link rmlCDATA    Folded
 hi def link rmlAttr     Statement
 hi def link rmlAttrSet  Statement
 hi def link rmlAttrVal  Statement
-" hi def link rmlAttrSet  Typedef
-" hi def link rmlAttrVal  Typedef
+hi def link rmlAssign   Typedef
 
 hi def link rmlTagName  Identifier
 hi def link rmlTagLine  Identifier

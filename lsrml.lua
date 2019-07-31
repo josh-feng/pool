@@ -34,9 +34,10 @@ local lrp = require('pool') { -- linux rml parser
             o.Data     = callbacktbl.Data     or o.Data
             o.Paste    = callbacktbl.Paste    or o.Paste
             o.String   = callbacktbl.String   or o.String
+            o.Comment  = callbacktbl.Comment  or o.Comment
         end
-        o.spec = {tab = 4; ver = '1'}
-        if not debug then o.debug = function (o) end end
+        o.spec = {ver = '1'; tab = 4}
+        if debug then o.debug = function (o, ...) print(...) end end
     end; -- }}}
 
     ['>'] = function (o) o:close() end;
@@ -48,8 +49,9 @@ local lrp = require('pool') { -- linux rml parser
     Data     = function (o, str)             o:debug('Data:', str)                 end;
     Paste    = function (o, str, hint, seal) o:debug('Paste:', str, hint, seal)    return str end;
     String   = function (o, str)             o:debug('String:', str)               return str end;
+    Comment  = false; -- function (o, str) o:debug('Comment:', str) end;
 
-    debug = function (o, ...) print(...) end;
+    debug = function (o) end; -- nil function
     checkIdFmt = function (o, name) return string.match(name, '^[%w_][%w_%:%.%-]*$') end; -- TODO syntax
 
     close = function (o, indl) -- close and validation -- {{{
@@ -110,6 +112,7 @@ local lrp = require('pool') { -- linux rml parser
                 table.insert(o.data, line)
             end
         else -- comment
+            if o.Comment then o:Comment(line) end
             if string.find(line, '#%['..o.seal..'%]>') then o.seal = false end
         end
     end; -- }}}
@@ -158,23 +161,21 @@ local lrp = require('pool') { -- linux rml parser
                 elseif string.find(line, '%S') then -- non empty -- {{{
                     t, d = string.match(line, '^%s*(%S+)(.*)')
                     if string.sub(t, 1, 1) == '#' then -- {{{ comment
+                        if o.Comment then o:Comment(t..d) end
                         o.hint, o.seal, d = string.match(t, '^%s*#<([^%[]*)%[([^%]]*)%](.*)')
                         if o.seal then o.hint = false ; line = d else line = nil end -- }}}
                     else -- attr or tags -- {{{
                         if o.seek then -- {{{ seek tag
                             if o.attr then -- {{{
-                                if o.seta then -- check duplicate -- {{{
-                                    if o.attr[o.seta] then msg = 'duplicate attribute '..o.seta end
-                                    o.attr[o.seta] = o.data or ''
-                                end -- }}}
+                                if o.seta then o.attr[o.seta] = o.data or '' end
                                 o.data = false
                                 if string.find(t, "=$") or string.find(d, "^%s+=") then -- {{{
                                     o.seta = string.match(t, "[^=]*")
-                                    if o:checkIdFmt(o.seta) then
+                                    if o:checkIdFmt(o.seta) and not o.attr[o.seta] then -- check duplicate
                                         table.insert(o.attr, o.seta) -- record order
                                         line = string.match(d, "%s*=?%s*(.*)")
                                     else
-                                        msg = 'wrong attribute name'
+                                        msg = 'wrong/duplicate attribute '..o.seta
                                     end
                                 else
                                     if t == '}:' then
@@ -238,7 +239,8 @@ local lrp = require('pool') { -- linux rml parser
                         end -- }}}
 
                         if msg or not string.find(line, '%S') then line = nil
-                        elseif not string.find(line, '^%s*#') then line, msg = o:setData(line, s) end
+                        elseif not string.find(line, '^%s*#') then line, msg = o:setData(line, s)
+                        elseif o.Comment                      then o:Comment(line) end
                     end -- }}} -- }}}
                 else -- empty line
                     line = nil

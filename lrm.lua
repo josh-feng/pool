@@ -294,7 +294,7 @@ end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-    return #res == 0 and '' or '#rml ver=1\n'..tconcat(res, '\n')
+    return #res == 0 and '' or '#rml ver=1 tab=4\n'..tconcat(res, '\n')
 end -- }}}
 -- ======================================================================== --
 if #arg > 0 then -- service for fast checking object model -- {{{

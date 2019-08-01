@@ -36,7 +36,7 @@ local lrp = require('pool') { -- linux rml parser
             o.String   = callbacktbl.String   or o.String
             o.Comment  = callbacktbl.Comment  or o.Comment
         end
-        o.spec = {ver = '1'; tab = 4}
+        o.spec = {version = '1'; tab = 4; mode = 0} -- mode 0/relax, 1/strict, 2/critical
         if debug then o.debug = function (o, ...) print(...) end end
     end; -- }}}
 
@@ -52,7 +52,7 @@ local lrp = require('pool') { -- linux rml parser
     Comment  = false; -- function (o, str) o:debug('Comment:', str) end;
 
     debug = function (o) end; -- nil function
-    checkIdFmt = function (o, name) return string.match(name, '^[%w_][%w_%:%.%-]*$') end; -- TODO syntax
+    checkIdFmt = function (o, name) return name and string.match(name, '^[%w_][%w_%:%.%-]*$') end;
 
     close = function (o, indl) -- close and validation -- {{{
         if not indl then
@@ -67,7 +67,7 @@ local lrp = require('pool') { -- linux rml parser
         o.indl = #o.tags -- sync
     end; -- }}}
 
-    setSpec = function (o, line) -- {{{ tab:version:style:stamp
+    setSpec = function (o, line) -- {{{ tab:version:mode:style:stamp
         line = string.match(line, '^#rml%s(.*)')
         if line then
             for item in string.gmatch(line, '%S+') do
@@ -76,6 +76,7 @@ local lrp = require('pool') { -- linux rml parser
             end
             o.spec.tab = tonumber(o.spec.tab) or 0
             if o.spec.tab <= 0 then msg = 'setting: tab' end
+            o.spec.mode = tonumber(o.spec.mode) or 0
             o:Spec(o.spec)
             o.tags = {}
         else
@@ -83,33 +84,51 @@ local lrp = require('pool') { -- linux rml parser
         end
     end; -- }}}
 
-    setString = function (o, line) -- string {{{ -- TODO chop off indn
+    forceIndent = function (o, line) -- {{{ indentation?
+        local s = o.spec.mode > 0 and o.indl * o.spec.tab or 0
+        if s > 1 and #o.data > 0 then
+            if string.find(string.sub(line, 1, s), '%S') then
+                if o.spec.mode > 1 then return nil, "indentation("..s..")" end
+            else
+                line = string.sub(line, 1 + s)
+            end
+        end
+        return line
+    end; -- }}}
+
+    setString = function (o, line) -- string {{{
         local t, d = o.quot..' ', string.gsub(line, '\\'..o.quot, '\n')..' ' -- replace quote w/ \n
         if string.find(d, t) then -- closing
             d, line = string.match(d, '(.-)'..t..'(.-)%s?$')
-            table.insert(o.data, (string.gsub(d, '\n', o.quot)))
+            d, t = o:forceIndent((string.gsub(d, '\n', o.quot))) -- t is the error msg
+            table.insert(o.data, d)
             o.data = o:String(table.concat(o.data, '\n'))
             line = string.find(line, '%S') and string.gsub(line, '\n', '\\'..o.quot) or nil
             o.quot = false
             o.seek = false
-            return line
+            return line, t
         else
+            line, t = o:forceIndent(line)
             table.insert(o.data, line)
+            return nil, t
         end
     end; -- }}}
 
-    setPaste = function (o, line) -- paste -- {{{ -- TODO chop off indn
+    setPaste = function (o, line) -- paste -- {{{
         if o.hint then
             local d = line..' '
             if string.find(d, '%['..o.seal..'%]> ') then -- closing
                 d, line = string.match(d, '^(.-)%['..o.seal..'%]>%s(.*)')
+                d, t = o:forceIndent(d) -- t is the error msg
                 table.insert(o.data, d)
                 o.data = o:Paste(table.concat(o.data, '\n'), o.hint, o.seal)
                 o.seal = false
                 o.seek = false
-                return string.find(line, '%S') and line or nil
+                return (string.find(line, '%S') and line or nil), t
             else
+                line, t = o:forceIndent(line)
                 table.insert(o.data, line)
+                return nil, t
             end
         else -- comment
             if o.Comment then o:Comment(line) end
@@ -155,9 +174,9 @@ local lrp = require('pool') { -- linux rml parser
                 if not o.tags then
                     line, msg = o:setSpec(line) -- #rml [var=val]*
                 elseif o.quot then
-                    line = o:setString(line)
+                    line, msg = o:setString(line)
                 elseif o.seal then
-                    line = o:setPaste(line)
+                    line, msg = o:setPaste(line)
                 elseif string.find(line, '%S') then -- non empty -- {{{
                     t, d = string.match(line, '^%s*(%S+)(.*)')
                     if string.sub(t, 1, 1) == '#' then -- {{{ comment
@@ -179,9 +198,10 @@ local lrp = require('pool') { -- linux rml parser
                                     end
                                 else
                                     if t == '}:' then
+                                        o.indl = o.indl - 1
                                         o:StartTag(o.tags[#o.tags], o.attr, o.indl) o.attr = false
                                     else
-                                        if string.match(t, '^%S+$') then -- TODO attr prop syntax
+                                        if o:checkIdFmt(string.match(t, '^[%&%*]?(%S+)$')) then
                                             table.insert(o.attr, t)
                                             o.data = '' -- true
                                         else
@@ -229,6 +249,7 @@ local lrp = require('pool') { -- linux rml parser
                                         table.insert(o.tags, t)
                                         o.attr = {}
                                         line = d
+                                        o.indl = o.indl + 1
                                     else
                                         msg = 'wrong tag name for attr'
                                     end
@@ -254,20 +275,21 @@ local lrp = require('pool') { -- linux rml parser
 -- {{{ ==================  demo and self-test (QA)  ==========================
 local rml = lrp()
 local status, msg, line = rml:parse(
-[[#rml ver=1.0 tab=4 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
+[[#rml version=1.0 tab=4 mode=1 stamp=md5:127e416ebd01bf62ee2321e7083be0df style=var://style
   #<[]comment start
   #[]>comment end
 
 style: "html" default # {{{
     h1: fn=5          # header 1
-    h2: fn=4          # header 2
     f1: fn=3 color=4  # footnote 1
-        numbering: roman    # i, ii, ...
+        numbering: # i, ii, ...
+            roman
     # }}}
 doc1:
     title|h1: self test
     footnote|f1: #
         <tex[seal1]
+        simple latex math
 \[
     1 + \exp^{i \pi} \;\;=\;\; 0
 \]
@@ -280,13 +302,13 @@ doc1:
               #[]> whole line in comment
         ft = #
         fn = "30" #
-        fs = <test[]
-        []> # string or paste do not allow extra regular data
+        fs = <test[]start
+        end[]> # string or paste do not allow extra regular data
         }: example text
-        : "" "item 1" test: <and[]# test and # comment part
+        item: "" "item 1" test: <and[]# test and # comment part
             footnote|f1: another footnote
         : \#
-doc2|h2:
+doc2|h1:
     |p:
         :
     |p:

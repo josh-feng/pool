@@ -51,8 +51,11 @@ syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\z(\i*\)\[\z([^\]]*\)\]" end="\[\z2\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
+syn match   rmlAssign  +=+ contained containedin=rmlAttr,rmlAttrVal
+syn match   rmlSep     +|+ contained containedin=rmlAttr,rmlTagLine,rmlTagName
+
 " attribute
-syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1 contains=rmlAssign
+syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1 contains=rmlAssign,rmlSep
 syn match   rmlAttrSet  contained containedin=rmlTagProp
     \ "\(^\||{\)\@<=\s*\(\*\|&\)\?\I\i*\(\s\|$\)\@=" nextgroup=rmlComment
 syn match   rmlAttrVal  contained containedin=rmlTagProp contains=rmlAssign
@@ -60,10 +63,10 @@ syn match   rmlAttrVal  contained containedin=rmlTagProp contains=rmlAssign
 
 " tag: see cindent
 syn match   rmlTagLine  keepend +^\s*\(\(\i\||\)\S*\)\?:\(\s\|$\)\@=+
-    \ contains=rmlAttr nextgroup=rmlPaste,rmlString,rmlNormal
-syn region  rmlTagProp  matchgroup=rmlTagName nextgroup=rmlPaste,rmlString,rmlNormal
+    \ contains=rmlAttr,rmlSep nextgroup=rmlString,rmlPaste,rmlNormal
+syn region  rmlTagProp  keepend matchgroup=rmlTagName nextgroup=rmlString,rmlPaste,rmlNormal
     \ start="^\s*\(\i[^ |{]*\)\?|{\(\s\|$\)\@=" end="^\s*}:\(\s\|$\)\@="
-    \ extend contains=ALLBUT,rmlTagLine,rmlTagProp
+    \ contains=ALLBUT,rmlTagLine,rmlTagProp
 
 " comment
 syn keyword rmlTodo     contained TODO FIXME XXX
@@ -71,8 +74,6 @@ syn match   rmlComment  keepend +\(^\|\s\)#.*$+ contains=rmlTodo,@Spell
 syn region  rmlComment  matchgroup=rmlComment fold
     \ start="\(^\|\s\+\)#<\w*\[\z([^\]]*\)\]" end="#\[\z1\]>.*$"
     \ contains=rmlTodo,@Spell,@rmlPasteHook
-
-syn match   rmlAssign  +=+ contained containedin=rmlTagLine,rmlTagProp,rmlAttVal
 
 " The default highlighting."{{{
 " highlight Folded term=bold ctermbg=blue ctermfg=cyan guibg=grey guifg=blue
@@ -86,6 +87,7 @@ hi def link rmlCDATA    Folded
 hi def link rmlAttr     Statement
 hi def link rmlAttrSet  Statement
 hi def link rmlAttrVal  Statement
+hi def link rmlSep      Identifier
 hi def link rmlAssign   Typedef
 
 hi def link rmlTagName  Identifier

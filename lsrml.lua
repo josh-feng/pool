@@ -85,7 +85,7 @@ local lrp = require('pool') { -- linux rml parser
     end; -- }}}
 
     forceIndent = function (o, line) -- {{{ indentation?
-        local s = o.spec.mode > 0 and o.indl * o.spec.tab or 0
+        local s = o.spec.mode > 0 and (o.indl + 1) * o.spec.tab or 0
         if s > 1 and #o.data > 0 then
             if string.find(string.sub(line, 1, s), '%S') then
                 if o.spec.mode > 1 then return nil, "indentation("..s..")" end

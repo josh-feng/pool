@@ -194,74 +194,44 @@ end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
-lrm.rmldata = function (s, mode) -- {{{ -- TODO userdata? mode=nil/auto,0/string,1/paste
-    do return s end
+lrm.rmldata = function (s, mode) -- {{{ -- mode=nil/auto,0/string,1/paste
     -- encode: gzip -c | base64 -w 128
     -- decode: base64 -i -d | zcat -f
-    -- return '<!-- base64 -i -d | zcat -f -->{{{'..
-    --     tun.popen(s, 'tun.gzip -c | base64 -w 128'):read('*all')..'}}}'
-    s = tostring(s)
-    if strfind(s, '\n') or (strlen(s) > 1024) then -- large text
-        if mode or strfind(s, ']]>') then -- enc flag or hostile strings
-            -- local status, stdout, stderr = tun.popen(s, 'gzip -c | base64 -w 128')
-            local status, stdout, stderr
-            return '<!-- base64 -i -d | zcat -f -->{{{'..stdout..'}}}'
+    if s == '' then return s end
+    if mode == 1 then
+        s = '<[]'..s..'[]>'
+    elseif mode == 0 then
+        s = '"'..s..'"' -- TODO
+    else
+        local t, d
+        if strfind(s, '[\n\t]') or strfind(s, '%s%s') then
+            t, d = strmatch(s, '^(.*%s%s+%S*)(.*)$')
+            if d and strfind(d, '[\n\t]') then
+                d, s = strmatch(d, '^(.*[\n\t]%S*)%s*(.*)')
+                d = '<[]'..t..d..'[]>\n'
+            elseif t then
+                d, s = '"'..t..'" ', d -- TODO
+            else
+                d, s = '<[]'..s..'[]> ', ''
+            end
         else
-            -- return (strfind(s, '"') or strfind(s, "'") or strfind(s, '&') or
-            --         strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
-            return (strfind(s, '&') or strfind(s, '<') or strfind(s, '>')) and '<![CDATA[\n'..s..']]>' or s
+            t, d = strmatch(s, '^(.-%S)(.*)$')
+            if t and strfind(t, '[\'"]') then
+                d, s = '"'..t..'" ', d -- TODO
+            elseif strfind(s, '^%s') then
+                d = '"'..(strmatch(s, '^%s*'))..'" ' -- TODO
+            else
+                d = nil
+            end
         end
-    else -- escape characters
-        return strgsub(strgsub(strgsub(strgsub(strgsub(s,
-            '"', '&quot;'), "'", '&apos;'), '&', '&amp;'), '<', '&lt;'), '>', '&gt;')
+        s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#')
+        if d then s = d..s end
     end
+    return s
 end -- }}}
---[=[
-{
-    {
-        {["*"] = "fn=5", ["."] = "h1"},
-        {["*"] = "fn=4", ["."] = "h2"},
-        {{["*"] = "roman", ["."] = "numbering"}, ["*"] = "fn=3 color=4", ["."] = "f1"},
-        ["*"] = "html default",
-        ["."] = "style"
-    },
-    {
-        {["*"] = "self test", ["."] = "title", ["@"] = {"h1"}},
-        {
-            ["*"] = "
-            \[
-                1 + \exp^{i \pi} \;\;=\;\; 0
-            \]
-                 shows in the \"footnote\" section",
-            ["."] = "footnote",
-            ["@"] = {"f1"}
-        },
-        {["."] = "chapter", ["@"] = {"http://link/to/other/file/var", "&id"}},
-        {
-            {
-                {["*"] = "another footnote", ["."] = "footnote", ["@"] = {"f1"}},
-                ["*"] = "\"item 1\" test: <and[]# test and",
-                ["."] = ""
-            },
-            {["*"] = "#", ["."] = ""},
-            ["*"] = "example text",
-            ["."] = "chapter",
-            ["@"] = {"*id", "ft", "fn", "fs", fn = "30", fs = "         ", ft = ""}
-        },
-        ["."] = "doc1"
-    },
-    {
-        {{["."] = ""}, ["."] = "", ["@"] = {"p"}},
-        {{["*"] = "abc", ["."] = "abc"}, ["*"] = "ad regular \"data]]) abc", ["."] = "", ["@"] = {"p"}},
-        ["."] = "doc2",
-        ["@"] = {"h2"}
-    },
-    ["?"] = {}
-}
---]=]
-local function dumpLom (node) -- {{{ RML format: tbm = {['.'] = tag; ['@attr'] = value; ...} TODO
-    node['.'] = node['.'] or '' -- if not node['.'] then return end
-    local res, attr = {}, false
+local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all,1/lua
+    -- tbm = {['.'] = tag; ['@'] = value; ...}
+    local res, attr, name = {}, false, node['.'] or ''
     if node['@'] then -- {{{
         local len = 0 -- {{{ check the attr style
         for _, k in ipairs(node['@']) do
@@ -273,23 +243,30 @@ local function dumpLom (node) -- {{{ RML format: tbm = {['.'] = tag; ['@attr'] =
             len = len + strlen(k) + 1
         end
         if len < 0 then attr = true end -- }}}
-        for _, k in ipairs(node['@']) do -- TODO
+        for _, k in ipairs(node['@']) do
             local v = node['@'][k]
-            tinsert(res, v and (attr and k..' = '..lrm.rmldata(v) or k..'='..v) or k)
+            if v then
+                tinsert(res, attr and k..' = '..strgsub(lrm.rmldata(v, 0), '\n', '\n'..indent) or k..'='..v)
+            else
+                tinsert(res, k)
+            end
         end
         attr = attr and '{\n'..tconcat(res, '\n')..'\n}' or tconcat(res, '|')
     end -- }}}
-    res = node['.']..(attr and '|'..attr or '')..(node['*'] and ': '..lrm.rmldata(node['*']) or ':')
-    if #node == 0 then return res end
-    res = {res}
-    for i = 1, #node do
-        if type(node[i]) == 'table' then
-            tinsert(res, dumpLom(node[i]))
-        else
-            tinsert(res, {['*'] = node[i]}) -- or ERROR
+    res = name..(attr and '|'..attr or '')..(node['*'] and ': '..lrm.rmldata(node['*']) or ':')
+    if #node > 0 then
+        res = {res}
+        for i = 1, #node do
+            if type(node[i]) == 'table' then
+                tinsert(res, dumpLom(node[i]))
+            -- else
+            --     s = tostring(s)
+            --     tinsert(res, {['*'] = node[i]}) -- or ERROR
+            end
         end
+        res = tconcat(res, '\n')
     end
-    return strgsub(tconcat(res, '\n'), '\n', '\n'..indent)..'\n'
+    return (strgsub(res, '\n', '\n'..indent))
 end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}

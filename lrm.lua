@@ -199,32 +199,34 @@ lrm.rmldata = function (s, mode) -- {{{ -- mode=nil/auto,0/string,1/paste
     -- decode: base64 -i -d | zcat -f
     if s == '' then return s end
     if mode == 1 then
-        s = '<[]'..s..'[]>'
+        s = '<[]'..s..'[]>' -- TODO seal
     elseif mode == 0 then
-        s = '"'..s..'"' -- TODO
+        s = '"'..s..'"' -- TODO quot
     else
         local t, d
         if strfind(s, '[\n\t]') or strfind(s, '%s%s') then
-            t, d = strmatch(s, '^(.*%s%s+%S*)(.*)$')
+            t, d = strmatch(s, '^(.*%s%s+%S*)%s*(.*)$')
             if d and strfind(d, '[\n\t]') then
-                d, s = strmatch(d, '^(.*[\n\t]%S*)%s*(.*)')
-                d = '<[]'..t..d..'[]>\n'
+                d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
+                d = '<[]'..t..d..'[]> '
+            elseif d and strfind(t, '[\n\t]') then
+                d, s = '<[]'..t..'[]> ', d -- seal
             elseif t then
-                d, s = '"'..t..'" ', d -- TODO
+                d, s = '"'..t..'" ', d -- TODO -- quot
             else
-                d, s = '<[]'..s..'[]> ', ''
+                d, s = '<[]'..s..'[]>', '' -- TODO -- seal
             end
         else
-            t, d = strmatch(s, '^(.-%S)(.*)$')
+            t, d = strmatch(s, '^(.-%S+)(.*)$')
             if t and strfind(t, '[\'"]') then
-                d, s = '"'..t..'" ', d -- TODO
+                d = '"" ' -- d, s = '"'..t..'" ', d
             elseif strfind(s, '^%s') then
-                d = '"'..(strmatch(s, '^%s*'))..'" ' -- TODO
+                d = '"'..(strmatch(s, '^%s*'))..'" '
             else
                 d = nil
             end
         end
-        s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#')
+        s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#') -- TODO text width
         if d then s = d..s end
     end
     return s

@@ -56,7 +56,7 @@ local lrp = require('pool') { -- linux rml parser
 
     close = function (o, indl) -- close and validation -- {{{
         if not indl then
-            if o.attr or o.quot or o.seal then return "Data not closed" end
+            if o.attr or o.quot or o.seal then return "Attr/Data not closed" end
             indl = 0
         end
         if o.data and (#o.tags > 0) then
@@ -80,6 +80,7 @@ local lrp = require('pool') { -- linux rml parser
             o:Spec(o.spec)
             o.tags = {}
         else
+            o.close = o.debug -- no o.tags
             return line, 'Not an RML document'
         end
     end; -- }}}
@@ -103,7 +104,7 @@ local lrp = require('pool') { -- linux rml parser
             d, t = o:forceIndent((string.gsub(d, '\n', o.quot))) -- t is the error msg
             table.insert(o.data, d)
             o.data = o:String(table.concat(o.data, '\n'))
-            line = string.find(line, '%S') and string.gsub(line, '\n', '\\'..o.quot) or nil
+            line = string.find(line, '%S') and string.gsub(line, '\n', '\\'..o.quot) or nil -- recover
             o.quot = false
             o.seek = false
             return line, t
@@ -136,7 +137,7 @@ local lrp = require('pool') { -- linux rml parser
         end
     end; -- }}}
 
-    setData = function (o, line, s) -- {{{
+    setData = function (o, line, s) -- {{{ -- s is the current line indentation
         local t, d
         if not o.data then -- {{{ data: string and paste first once
             o.quot, d = string.match(line, '^%s*(["\'])(.*)')
@@ -147,11 +148,11 @@ local lrp = require('pool') { -- linux rml parser
                 return d
             end
         end -- }}}
-        t, d = string.match(line, '^(.-)%s(#.*)') -- {{{ retular data
+        t, d = string.match(line, '^(.-)%s+(#.*)') -- {{{ retular data
         if not t then t = line end
         if string.find(t, '%S') then
             if s < o.spec.tab * o.indl then return t, 'data indentation' end
-            t = string.gsub(string.gsub(string.match(t, '(%S.-)%s*$'), '%s+', ' '), '\\#', '#')
+            t = string.gsub(string.gsub(string.match(t, '(%S.-)%s*$'), '%s+', ' '), '(%s*)\\#', '%1#')
             if o.attr then return d, 'attr data format ('..t..')' end
             if type(o.data) == 'table' then
                 table.insert(o.data, t)
@@ -260,8 +261,7 @@ local lrp = require('pool') { -- linux rml parser
                         end -- }}}
 
                         if msg or not string.find(line, '%S') then line = nil
-                        elseif not string.find(line, '^%s*#') then line, msg = o:setData(line, s)
-                        elseif o.Comment                      then o:Comment(line) end
+                        elseif not string.find(line, '^%s*#') then line, msg = o:setData(line, s) end
                     end -- }}} -- }}}
                 else -- empty line
                     line = nil

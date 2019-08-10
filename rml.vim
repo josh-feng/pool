@@ -48,7 +48,7 @@ syn match   rmlError    contained containedin=rmlTagProp +[^ '"#]\S*+
 
 " verbatim block
 syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
-    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\z(\i*\)\[\z([^\]]*\)\]" end="\[\z2\]>\(\s\|$\)\@="
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\z(\i*\)\[\z(\i*\)\]" end="\[\z2\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
 syn match   rmlAssign  +=+ contained containedin=rmlAttr,rmlAttrVal

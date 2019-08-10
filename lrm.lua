@@ -194,47 +194,53 @@ end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
+local rmlstring = function (s) -- {{{
+    local q = (strfind(s, "^'") or not strfind(s, '"')) and '"' or "'"
+    return q..strgsub(s, '([^\\])'..q..'(%s)', '%1\\'..q..'%2')..q
+end -- }}}
+local rmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decode: base64 -i -d | zcat -f
+    local seal, t = '', {}
+    for _ in strgmatch(s, '%[(%w*)%]>') do if _ ~= '' and not t[_] then tinsert(t, _) ; t[_] = true end end -- uniq
+    table.sort(t, function (a, b) return strlen(a) < strlen(b) end)
+    if #t > 0 then seal = t[#t]..'0' end
+    -- for i = 1, #t do end
+    return '<txt['..seal..']'..s..'['..seal..']>'
+end -- }}}
 lrm.rmldata = function (s, mode) -- {{{ -- mode=nil/auto,0/string,1/paste
-    -- encode: gzip -c | base64 -w 128
-    -- decode: base64 -i -d | zcat -f
     if s == '' then return s end
-    if mode == 1 then
-        s = '<[]'..s..'[]>' -- TODO seal
-    elseif mode == 0 then
-        s = '"'..s..'"' -- TODO quot
-    else
-        local t, d
-        if strfind(s, '[\n\t]') or strfind(s, '%s%s') then
-            t, d = strmatch(s, '^(.*%s%s+%S*)%s*(.*)$')
-            if d and strfind(d, '[\n\t]') then
-                d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
-                d = '<[]'..t..d..'[]> '
-            elseif d and strfind(t, '[\n\t]') then
-                d, s = '<[]'..t..'[]> ', d -- seal
-            elseif t then
-                d, s = '"'..t..'" ', d -- TODO -- quot
-            else
-                d, s = '<[]'..s..'[]>', '' -- TODO -- seal
-            end
+    if mode == 0 then return rmlstring(s) end
+    if mode == 1 then return rmlpaste(s) end
+    local t, d
+    if strfind(s, '[\n\t]') or strfind(s, '%s%s') then
+        t, d = strmatch(s, '^(.*%s%s+%S*)%s*(.*)$')
+        if d and strfind(d, '[\n\t]') then
+            d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
+            d = rmlpaste(t..d)..' '
+        elseif d and strfind(t, '[\n\t]') then
+            d, s = rmlpaste(t)..' ', d
+        elseif t then
+            d, s = rmlstring(t)..' ', d
         else
-            t, d = strmatch(s, '^(.-%S+)(.*)$')
-            if t and strfind(t, '[\'"]') then
-                d = '"" ' -- d, s = '"'..t..'" ', d
-            elseif strfind(s, '^%s') then
-                d = '"'..(strmatch(s, '^%s*'))..'" '
-            else
-                d = nil
-            end
+            d, s = rmlpaste(s), ''
         end
-        s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#') -- TODO text width
-        if d then s = d..s end
+    else
+        t, d = strmatch(s, '^(.-%S+)(.*)$')
+        if t and strfind(t, '[\'"]') then
+            d = '"" ' -- d, s = '"'..t..'" ', d
+        elseif strfind(s, '^%s') then
+            d = '"'..(strmatch(s, '^%s*'))..'" '
+        else
+            d = nil
+        end
     end
-    return s
+    s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#')
+    return d and d..s or s
 end -- }}}
 local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all,1/lua
     -- tbm = {['.'] = tag; ['@'] = value; ...}
-    local res, attr, name = {}, false, node['.'] or ''
+    local res, attr
     if node['@'] then -- {{{
+        res = {}
         local len = 0 -- {{{ check the attr style
         for _, k in ipairs(node['@']) do
             local v = node['@'][k]
@@ -255,7 +261,14 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
         end
         attr = attr and '{\n'..tconcat(res, '\n')..'\n}' or tconcat(res, '|')
     end -- }}}
-    res = name..(attr and '|'..attr or '')..(node['*'] and ': '..lrm.rmldata(node['*']) or ':')
+    res = node['*'] and lrm.rmldata(node['*']) or ''
+    if strfind(res, '\n') or #node > 0 then
+        res = ' # {{{\n'..res
+        if #node == 0 then res = res..'\n# }}}' end
+    elseif res ~= '' then
+        res = ' '..res
+    end
+    res = (node['.'] or '')..(attr and '|'..attr or '')..':'..res
     if #node > 0 then
         res = {res}
         for i = 1, #node do
@@ -266,14 +279,15 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
             --     tinsert(res, {['*'] = node[i]}) -- or ERROR
             end
         end
-        res = tconcat(res, '\n')
+        res = tconcat(res, '\n')..'\n# }}}'
     end
     return (strgsub(res, '\n', '\n'..indent))
 end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-    return #res == 0 and '' or '#rml ver=1 tab=4\n'..tconcat(res, '\n')
+    return #res == 0 and '' or '#rml ver=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '%s*\n', '\n')..
+    '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1'
 end -- }}}
 -- ======================================================================== --
 if #arg > 0 then -- service for fast checking object model -- {{{

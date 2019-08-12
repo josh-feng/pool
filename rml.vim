@@ -4,19 +4,20 @@
 " Last Change:  2019 May 07
 " Version: 1.00
 " change log: {{{
-"   rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
-"   blank   := ' ' | '\t'
-"   space   := [blank | '\r']+
-"   assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
-"   comment := '#' ([^\r]*' '\r' | pdata)
+"   rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+"   hspace  := ' ' | '\t'
+"   vspace  := '\r'
+"   space   := hspace | vspace
+"   comment := '#' [pdata] [hspace | ndata]* '\r'
+"   assign  := [id] [prop1* | prop2] ':' [hspace+ [comment] [pdata | sdata]] [space+ (ndata | comment)]*
 "   prop1   := '|' [attr0 | attr1]
-"   prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
-"   attr0   := id
+"   prop2   := '|{' [comment+ [attr0 | attr2 ]]* vspace+ '}'
+"   attr0   := [&|*] id
 "   attr1   := id '=' ndata
-"   attr2   := id blank* '=' [blank+ (pdata | sdata)]
-"   pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-"   sdata   := ['|"] .* ['|"] {C-string}
-"   ndata   := \S+ {' \#' is replaced w/ ' #'}
+"   attr2   := id hspace* '=' (hspace+ | comment) [pdata | sdata]
+"   ndata   := [^space]+
+"   sdata   := ['|"] .* ['|"]
+"   pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 "}}}
 
 " quit when a syntax file was already loaded {{{
@@ -51,8 +52,8 @@ syn region  rmlPaste    matchgroup=rmlCDATA fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\z(\i*\)\[\z(\i*\)\]" end="\[\z2\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHook
 
-syn match   rmlAssign  +=+ contained containedin=rmlAttr,rmlAttrVal
-syn match   rmlSep     +|+ contained containedin=rmlAttr,rmlTagLine,rmlTagName
+syn match   rmlAssign   +=+ contained containedin=rmlAttr,rmlAttrVal
+syn match   rmlSep      +|+ contained containedin=rmlAttr,rmlTagLine,rmlTagName
 
 " attribute
 syn match   rmlAttr     contained containedin=rmlTagLine "|[^ |]*[^ |:]"hs=s+1 contains=rmlAssign,rmlSep

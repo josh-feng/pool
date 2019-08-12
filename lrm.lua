@@ -67,7 +67,7 @@ local xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
     attr, idx = strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
     local xn = {} -- xml-node (doc)
     repeat -- collect along the metatable (if mode is defined)
-        for i = 1, #doc do -- no metatable
+        for i = 1, #doc do -- no metatable -- {{{
             local mt = doc[i]
             if type(mt) == 'table' and mt['.'] == tag and match(mt['@'], attr) then
                 if idx and idx < 0 then xn[1] = nil end -- clean up
@@ -82,7 +82,7 @@ local xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
                 end
                 if idx and idx > 0 then break end
             end
-        end
+        end -- }}}
         if idx and idx > 0 and #xn > 0 then break end
         doc = getmetatable(doc)
         if doc then doc = doc.index end
@@ -206,12 +206,12 @@ local rmlpaste = function (s) -- {{{ -- encode: gzip -c | base64 -w 128 -- decod
     -- for i = 1, #t do end
     return '<txt['..seal..']'..s..'['..seal..']>'
 end -- }}}
-lrm.rmldata = function (s, mode) -- {{{ -- mode=nil/auto,0/string,1/paste
+lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     if s == '' then return s end
     if mode == 0 then return rmlstring(s) end
     if mode == 1 then return rmlpaste(s) end
     local t, d
-    if strfind(s, '[\n\t]') or strfind(s, '%s%s') then
+    if strfind(s, '[\n\t]') or strfind(s, '%s%s') then -- {{{
         t, d = strmatch(s, '^(.*%s%s+%S*)%s*(.*)$')
         if d and strfind(d, '[\n\t]') then
             d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
@@ -232,10 +232,18 @@ lrm.rmldata = function (s, mode) -- {{{ -- mode=nil/auto,0/string,1/paste
         else
             d = nil
         end
-    end
+    end -- }}}
     s = strgsub(strgsub(s, ' #', ' \\#'), '^#', '\\#')
-    return d and d..s or s
+    wid = wid or 80 -- width
+    t, mode = {}, 0 -- recycle variable
+    for _ in strgmatch(s, '%S+') do -- {{{
+        mode = mode + strlen(_) + 1
+        if mode > wid then mode = 0 end
+        tinsert(t, mode == 0 and '\n'.._ or _)
+    end -- }}}
+    return d and d..tconcat(t, ' ') or tconcat(t, ' ')
 end -- }}}
+local foldb, folde = '# {{{', '# }}}'
 local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all,1/lua
     -- tbm = {['.'] = tag; ['@'] = value; ...}
     local res, attr
@@ -263,13 +271,13 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
     end -- }}}
     res = node['*'] and lrm.rmldata(node['*']) or ''
     if strfind(res, '\n') or #node > 0 then
-        res = ' # {{{\n'..res
-        if #node == 0 then res = res..'\n# }}}' end
+        res = ' '..foldb..'\n'..res
+        if #node == 0 then res = res..'\n'..folde end
     elseif res ~= '' then
         res = ' '..res
     end
     res = (node['.'] or '')..(attr and '|'..attr or '')..':'..res
-    if #node > 0 then
+    if #node > 0 then -- {{{
         res = {res}
         for i = 1, #node do
             if type(node[i]) == 'table' then
@@ -279,15 +287,15 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
             --     tinsert(res, {['*'] = node[i]}) -- or ERROR
             end
         end
-        res = tconcat(res, '\n')..'\n# }}}'
-    end
+        res = tconcat(res, '\n')..'\n'..folde
+    end -- }}}
     return (strgsub(res, '\n', '\n'..indent))
 end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
     return #res == 0 and '' or '#rml ver=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '%s*\n', '\n')..
-    '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1'
+        '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1'
 end -- }}}
 -- ======================================================================== --
 if #arg > 0 then -- service for fast checking object model -- {{{

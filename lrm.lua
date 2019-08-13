@@ -212,7 +212,7 @@ lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     if mode == 1 then return rmlpaste(s) end
     local t, d
     if strfind(s, '[\n\t]') or strfind(s, '%s%s') then -- {{{
-        t, d = strmatch(s, '^(.*%s%s+%S*)%s*(.*)$')
+        t, d = strmatch(s, '^(.*%s%s+%S*)(.*)$')
         if d and strfind(d, '[\n\t]') then
             d, s = strmatch(d, '^(.*[\n\t])%s*(.*)')
             d = rmlpaste(t..d)..' '
@@ -225,7 +225,7 @@ lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
         end
     else
         t, d = strmatch(s, '^(.-%S+)(.*)$')
-        if t and strfind(t, '[\'"]') then
+        if t and strfind(t, '[\'"]') or strfind(t, '<%w+%[') then
             d = '"" ' -- d, s = '"'..t..'" ', d
         elseif strfind(s, '^%s') then
             d = '"'..(strmatch(s, '^%s*'))..'" '
@@ -294,8 +294,8 @@ end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-    return #res == 0 and '' or '#rml ver=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '%s*\n', '\n')..
-        '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1'
+    return #res == 0 and '' or '#rml version=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '%s*\n', '\n')..
+        '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1' -- editor hint
 end -- }}}
 -- ======================================================================== --
 if #arg > 0 then -- service for fast checking object model -- {{{

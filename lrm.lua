@@ -294,7 +294,7 @@ end -- }}}
 lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document format
     local res = {}
     for _, doc in ipairs(docs) do tinsert(res, dumpLom(doc)) end
-    return #res == 0 and '' or '#rml version=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '%s*\n', '\n')..
+    return #res == 0 and '' or '#rml version=1 mode=2 tab=4\n'..strgsub(tconcat(res, '\n'), '[ ]*\n', '\n')..
         '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1' -- editor hint
 end -- }}}
 -- ======================================================================== --

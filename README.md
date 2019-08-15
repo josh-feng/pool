@@ -43,20 +43,21 @@ For polymorphism/inheritance:
     We will develop our own. The goal is to have a succinct format to break a text into usable fields.
 
     Syntax: RML works like punctutaions
-      rml     := '#rml' [blank+ [attr1]]* blank* '\r' [assign | blank* comment]*
-      blank   := ' ' | '\t'
-      space   := [blank | '\r']+
-      assign  := blank* [id] [prop1* | prop2] ':' [blank+ (pdata | sdata)] [[space (ndata | comment)]* '\r']+
-      comment := '#' ([^\r]*' '\r' | pdata)
-      prop1   := '|' [attr0 | attr1]
-      prop2   := '|{' space [blank* [[attr0 | attr2]] space comment* '\r']* '}'
-      attr0   := id
-      attr1   := id '=' ndata
-      attr2   := id blank* '=' [blank+ (pdata | sdata)]
-      pdata   := '<' [id] '[' id ']' .* '[' id ']>'
-      sdata   := ['|"] .* ['|"] {C-string}
-      ndata   := \S+ {' \#' is replaced w/ ' #'}
+        rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
+        hspace  := ' ' | '\t'
+        vspace  := '\r'
+        space   := hspace | vspace
+        comment := '#' [pdata] [hspace | ndata]* '\r'
+        assign  := [id] [prop1* | prop2] ':' [hspace+ [comment] [pdata | sdata]] [space+ (ndata | comment)]*
+        prop1   := '|' [attr0 | attr1]
+        prop2   := '|{' [comment+ [attr0 | attr2 ]]* vspace+ '}'
+        attr0   := [&|*] id
+        attr1   := id '=' ndata
+        attr2   := id hspace* '=' (hspace+ | comment) [pdata | sdata]
+        ndata   := [^space]+
+        sdata   := ['|"] .* ['|"]
+        pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 
     lsrml.lua provide a basic/simple lua script to parse an RML file,
-    it can be translate to C/C++ lib for efficiency.
-    With lsrml.lua, the script lom.lua provide a sample lua object model builder for RML file
+    it can be translate to C/C++ lib for efficiency. In fact, lrp.so is a C-module parser.
+    With lsrml.lua or lrp.so, the script lrm.lua provide a sample lua object model builder for RML file

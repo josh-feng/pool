@@ -24,8 +24,9 @@ style: # {{{
         p:      # paragraph
     # }}}
 
-|h1: Bakus Naur Form for RML (Reduced Markup Language) # {{{
+|h1: (Semi) Bakus Naur Form for RML (Reduced Markup Language) # {{{
 |p: # Syntax
+    <BNF[rml]
     rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'
     vspace  := '\r'
@@ -40,6 +41,7 @@ style: # {{{
     ndata   := [^space]+
     sdata   := ['|"] .* ['|"]
     pdata   := '<' [id] '[' id ']' .- '[' id ']>'
+    [rml]>
 |p: # Footnote
     : C-string := C style string (_any quoted characters_)
 # }}}

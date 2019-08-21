@@ -239,7 +239,7 @@ lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     for _ in strgmatch(s, '%S+') do -- {{{
         mode = mode + strlen(_) + 1
         if mode > wid then mode = 0 end
-        tinsert(t, mode == 0 and '\n'.._ or _)
+        tinsert(t, mode == 0 and #t > 0 and '\n'.._ or _)
     end -- }}}
     return d and d..tconcat(t, ' ') or tconcat(t, ' ')
 end -- }}}

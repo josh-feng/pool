@@ -15,11 +15,11 @@ description = {
 dependencies = {
    "lua >= 5.1, < 5.4"
 }
-external_depencies = {
-   LIBLRP = {
-      header = "lrp.h"
-   }
-}
+-- external_dependencies = {
+--    LIBLRP = {
+--       header = "lrp.h"
+--    }
+-- }
 build = {
    type = "builtin",
    modules = {
@@ -35,9 +35,9 @@ build = {
       lrp = {
          sources = {"src/lrp.c",},
          defines = {},
-         libraries = {"lrp"},
-         incdirs = {},
-         libdirs = {}
+         libraries = {},
+         incdirs = {"src"},
+         libdirs = {"src"}
       }
    },
    copy_directories = {"doc"}

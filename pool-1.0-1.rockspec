@@ -15,11 +15,6 @@ description = {
 dependencies = {
    "lua >= 5.1, < 5.4"
 }
--- external_dependencies = {
---    LIBLRP = {
---       header = "lrp.h"
---    }
--- }
 build = {
    type = "builtin",
    modules = {
@@ -27,13 +22,12 @@ build = {
       pool = "src/pool.lua",
 
       -- Reduced Markup Language (RML) parser (lua or C)
-      lrm = "src/lrm.lua",  
-
-      lsrml = "src/lsrml.lua",  
+      lrm = "src/lrm.lua",
+      lsrml = "src/lsrml.lua",
 
       -- c module written in C/++
       lrp = {
-         sources = {"src/lrp.c",},
+         sources = {"src/lrp.cpp",},
          defines = {},
          libraries = {},
          incdirs = {"src"},

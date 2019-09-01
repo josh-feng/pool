@@ -5,8 +5,8 @@
 #include <lua.hpp>
 #include <lualib.h>
 #include <lauxlib.h>
-//
-// LUA_API will properly handle C or C++ function name in compiled object code
+
+// LUA_API properly handle C or C++ function name in compiled object code
 LUA_API int luaopen_lrp (lua_State *);
 
 #endif

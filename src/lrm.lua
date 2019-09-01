@@ -58,14 +58,14 @@ local match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     end
     return true
 end -- }}}
-local xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
+local rPath = function (doc, path) -- {{{ return doc/rml-node table, missingTag
     if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
     local tag, attr, idx
     tag, path = strmatch(path, '([^/]+)(.*)$')
     tag, attr = strmatch(tag, '([^%[]+)%[?([^%]]*)')
     attr, idx = strToTbl(attr) -- idx: []/all, [-]/last, [0]/merged, [+]/first
-    local xn = {} -- xml-node (doc)
+    local xn = {} -- rml-node (doc)
     repeat -- collect along the metatable (if mode is defined)
         for i = 1, #doc do -- no metatable -- {{{
             local mt = doc[i]
@@ -88,12 +88,12 @@ local xPath = function (doc, path) -- {{{ return doc/xml-node table, missingTag
         if doc then doc = doc.index end
     until not doc
     if path == '' and idx == 0 then xn['.'] = tag; xn = {xn} end
-    return xPath(xn, path)
+    return rPath(xn, path)
 end -- }}}
 -- ======================================================================== --
 -- LOM (Lua Object Model)
 -- ======================================================================== --
-lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/xml, 1/lua
+lrm.Parse = function (txt, fmt) -- {{{ fmt: 0/rml, 1/lua
     local node = {} -- working variable: doc == root node (node == token == tag == table)
 
     local lrmcallbacks = {
@@ -158,7 +158,7 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
         local v = xn['@'] and xn['@']['url']
         if v then -- attr
 
-            local link, xpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
+            local link, rpath = strmatch(v, '^([^#]*)(.*)') -- {{{ file_link, tag_path
             if link == '' then -- back to this doc root
                 link = rml
             else -- new file
@@ -167,7 +167,7 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
             end -- }}}
 
             if not doctree[link] then TraceTbl(lrm.ParseRml(link, doctree, mode), link) end
-            link, xpath = xPath(doctree[link], strmatch(xpath or '', '#ptr%((.*)%)'))
+            link, rpath = rPath(doctree[link], strmatch(rpath or '', '#ptr%((.*)%)'))
 
             if #link == 1 then -- the linked table
                 local meta = link[1]
@@ -182,7 +182,7 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
                     TraceTbl(link[1], rml)
                 end
             else
-                tinsert(doctree[rml]['?'], 'broken <'..xn['.']..'> '..xpath..':'..#link..':'..v) -- error message
+                tinsert(doctree[rml]['?'], 'broken <'..xn['.']..'> '..rpath..':'..#link..':'..v) -- error message
             end
         end
         for i = 1, #xn do if type(xn[i]) == 'table' then TraceTbl(xn[i], rml) end end -- continous override
@@ -238,7 +238,8 @@ lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     t, mode = {}, 0 -- recycle variable
     for _ in strgmatch(s, '%S+') do -- {{{
         mode = mode + strlen(_) + 1
-        if mode > wid then mode = 0 end
+        if strsub(_, strlen(_)) == ':' then end
+        if mode > wid and strsub(_, strlen(_)) ~= ':' then mode = 0 end
         tinsert(t, mode == 0 and #t > 0 and '\n'.._ or _)
     end -- }}}
     return d and d..tconcat(t, ' ') or tconcat(t, ' ')
@@ -271,7 +272,7 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
     end -- }}}
     res = node['*'] and lrm.rmldata(node['*']) or ''
     if strfind(res, '\n') or #node > 0 then
-        res = ' '..foldb..'\n'..res
+        res = strfind(res, '\n') and ' '..foldb..'\n'..res or (res == '' and ' ' or ' '..res..' ')..foldb
         if #node == 0 then res = res..'\n'..folde end
     elseif res ~= '' then
         res = ' '..res

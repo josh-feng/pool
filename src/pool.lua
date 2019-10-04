@@ -92,7 +92,7 @@ setmetatable(class, {
     end; -- }}}
 }) -- }}}
 
--- {{{ ==================  demo and self-test (QA)  ==========================
+-- {{{ ==================  demo and self-test (QA)  ========================== TODO move to regression
 local base = class {
     value = 1;
     variant = 1;

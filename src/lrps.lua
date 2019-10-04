@@ -15,7 +15,7 @@
     sdata   := ['|"] .* ['|"]
     pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 --]=]
-local lrp = require('pool') { -- linux rml parser
+local lrp = require('pool') { -- linux rml parser (script version)
     spec = false; -- document spec
     tags = false; -- tag hierarchy
     data = false; -- current data
@@ -37,7 +37,7 @@ local lrp = require('pool') { -- linux rml parser
             o.String   = callbacktbl.String   or o.String
             o.Comment  = callbacktbl.Comment  or o.Comment
         end
-        o.spec = {version = '1'; tab = 4; mode = 0} -- mode 0/relax, 1/strict, 2/critical
+        o.spec = {version = '1'; tab = 4; mode = 0} -- mode 0/standard, 1/relax, 2/sloppy
         if debug then o.debug = function (o, ...) print(...) end end
     end; -- }}}
 
@@ -87,10 +87,10 @@ local lrp = require('pool') { -- linux rml parser
     end; -- }}}
 
     forceIndent = function (o, line) -- {{{ indentation? return line, msg
-        local s = o.spec.mode > 0 and (o.indl + 1) * o.spec.tab or 0
+        local s = o.spec.mode < 2 and (o.indl + 1) * o.spec.tab or 0
         if s > 1 and #o.data > 0 then
             if string.find(string.sub(line, 1, s), '%S') then
-                if o.spec.mode > 1 then return nil, "indentation("..s..")" end
+                if o.spec.mode < 1 then return nil, "indentation("..s..")" end
             else
                 line = string.sub(line, 1 + s)
             end

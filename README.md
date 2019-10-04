@@ -58,6 +58,6 @@ For polymorphism/inheritance:
         sdata   := ['|"] .* ['|"]
         pdata   := '<' [id] '[' id ']' .- '[' id ']>'
 
-    lsrml.lua provide a basic/simple lua script to parse an RML file,
-    it can be translate to C/C++ lib for efficiency. In fact, lrp.so is a C-module parser.
-    With lsrml.lua or lrp.so, the script lrm.lua provide a sample lua object model builder for RML file
+    lrps.lua provide a basic/simple lua script to parse an RML file,
+    it can be coded to C/C++ lib for efficiency. In fact, lrp.so will be the C-module parser.
+    With lrps.lua or lrp.so, the script lrm.lua provide a sample lua object model builder for RML file

@@ -1,4 +1,4 @@
-#rml version=1 mode=2 tab=4 style=tag://style
+#rml version=1 mode=0 tab=4 style=tag://style
 #<[] RML (Reduced Markup Language) Syntax # {{{ Regular Expression (C-string)
     rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
     hspace  := ' ' | '\t'

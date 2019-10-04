@@ -1,7 +1,10 @@
 package = "pool"
 version = "1.0-1"
 source = {
-   url = "git+https://github.com/josh-feng/pool"
+   -- url = "git+https://github.com/josh-feng/pool/archive/1.0.tar.gz",
+   url = "git+https://github.com/josh-feng/pool",
+   -- md5 = "",
+   -- dir = "pool-1.0",
 }
 description = {
    summary = "Poorman's object-oriented lua (POOL) and Reduced Markup Language (RML) support.",
@@ -13,20 +16,15 @@ description = {
    license = "MIT"
 }
 dependencies = {
-   "lua >= 5.1, < 5.4"
+   "lua >= 5.1" -- , < 5.4
 }
 build = {
    type = "builtin",
    modules = {
-      -- class (POOL)
-      pool = "src/pool.lua",
-
-      -- Reduced Markup Language (RML) parser (lua or C)
-      lrm = "src/lrm.lua",
-      lsrml = "src/lsrml.lua",
-
-      -- c module written in C/++
-      lrp = {
+      pool = "src/pool.lua", -- class (POOL)
+      lrm = "src/lrm.lua", -- Reduced Markup Language (RML)
+      lrps = "src/lrps.lua", -- RML script(lua) parser
+      lrp = { -- RML c parser: c module written in C/++
          sources = {"src/lrp.cpp",},
          defines = {},
          libraries = {},
@@ -34,5 +32,5 @@ build = {
          libdirs = {"src"}
       }
    },
-   copy_directories = {"doc"}
+   copy_directories = {"doc", "test"}
 }

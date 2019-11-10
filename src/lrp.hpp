@@ -1,7 +1,7 @@
 // RML parser
 // MIT license
-#ifndef _lip_hpp
-#define _lip_hpp
+#ifndef _lrp_hpp
+#define _lrp_hpp
 #include <lua.hpp>
 #include <lualib.h>
 #include <lauxlib.h>

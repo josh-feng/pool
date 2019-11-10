@@ -13,10 +13,11 @@ description = {
       RML works like a punctuation system for data serializtion.
    ]],
    homepage = "http://github.com/josh-feng/pool",
-   license = "MIT"
+   license = "MIT",
+   -- labels = {"object", "linux", "rml"}
 }
 dependencies = {
-   "lua >= 5.1" -- , < 5.4
+   "lua >= 5.1"
 }
 build = {
    type = "builtin",
@@ -25,7 +26,7 @@ build = {
       lrm = "src/lrm.lua", -- Reduced Markup Language (RML)
       lrps = "src/lrps.lua", -- RML script(lua) parser
       lrp = { -- RML c parser: c module written in C/++
-         sources = {"src/lrp.cpp",},
+         sources = {"src/lrp.cpp"},
          defines = {},
          libraries = {},
          incdirs = {"src"},

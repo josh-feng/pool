@@ -244,7 +244,7 @@ lrm.rmldata = function (s, mode, wid) -- {{{ -- mode=nil/auto,0/string,1/paste
     end -- }}}
     return d and d..tconcat(t, ' ') or tconcat(t, ' ')
 end -- }}}
-local foldb, folde = '# {{{', '# }}}'
+local fold_b, fold_e = '# {{{', '\n# }}}'
 local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all,1/lua
     -- tbm = {['.'] = tag; ['@'] = value; ...}
     local res, attr
@@ -271,9 +271,11 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
         attr = attr and '{\n'..tconcat(res, '\n')..'\n}' or tconcat(res, '|')
     end -- }}}
     res = node['*'] and lrm.rmldata(node['*']) or ''
+    local foldb, folde = '', ''
+    if strlen(res) > 512 or #node > 4 then foldb, folde = fold_b, fold_e end
     if strfind(res, '\n') or #node > 0 then
         res = strfind(res, '\n') and ' '..foldb..'\n'..res or (res == '' and ' ' or ' '..res..' ')..foldb
-        if #node == 0 then res = res..'\n'..folde end
+        if #node == 0 then res = res..folde end
     elseif res ~= '' then
         res = ' '..res
     end
@@ -288,7 +290,7 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
             --     tinsert(res, {['*'] = node[i]}) -- or ERROR
             end
         end
-        res = tconcat(res, '\n')..'\n'..folde
+        res = tconcat(res, '\n')..folde
     end -- }}}
     return (strgsub(res, '\n', '\n'..indent))
 end -- }}}

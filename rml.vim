@@ -1,7 +1,9 @@
-" Vim syntax file
-" Language: Reduced Markup Language
-" Maintainer:   Josh Feng <joshfwisc@gmail.com>
-" Last Change:  2019 May 07
+" File:        rml.vim
+" Description: Reduced Markup Language
+" Author:      Josh Feng <joshfwisc@gmail.com>
+" Licence:     Vim licence
+" Website:     http://josh-feng.github.com/pool/
+" Version:     1.00
 " Version: 1.00
 " change log: {{{
 "   rml     := '#rml' [hspace+ [attr1]]* [vspace hspace* [assign | comment]]*
@@ -21,9 +23,9 @@
 "}}}
 
 " quit when a syntax file was already loaded {{{
-if exists("b:current_syntax")
-  finish
-endif
+if exists("b:current_syntax") | finish | endif
+
+scriptencoding utf-8
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -97,10 +99,8 @@ hi def link rmlTagProp  NONE
 
 hi def link rmlError    Error
 "}}}
-let b:current_syntax = "rml"
 
 " ------------------  paste hook ------------------"{{{
-unlet b:current_syntax
 " execute 'syntax include @rmlPasteHook '.$VIMRUNTIME.'/syntax/'.s:paste.'.vim'
 " syn include @rmlPasteHook   $VIMRUNTIME/syntax/lua.vim
 syn include @rmlPasteHookLua $VIMRUNTIME/syntax/lua.vim
@@ -108,13 +108,11 @@ syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<lua\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookLua
 
-unlet b:current_syntax
 syn include @rmlPasteHookTex $VIMRUNTIME/syntax/tex.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<tex\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookTex
 
-unlet b:current_syntax
 syn include @rmlPasteHookCpp $VIMRUNTIME/syntax/cpp.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<cpp\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
@@ -125,4 +123,6 @@ let &cpo = s:cpo_save
 unlet s:cpo_save
 
 let &cms = ' # %s'
+
+let b:current_syntax = "rml"
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

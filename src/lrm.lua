@@ -191,9 +191,41 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
     if #doc['?'] == 0 then TraceTbl(doc, toprml) end -- no error msg
     return toprml, doctree
 end -- }}}
+local function Simplify (doc, keys) -- {{{
+    if (not doc['*'] or doc['*'] == '') and #doc == 0 then return
+    end
+    local attr = doc['@'] or {}
+    local i1 = 0
+    for i = 1, #doc do
+        local item = Simplify(doc[i], keys)
+        if item then
+            i1 = i1 + 1
+            for j = 1, #keys do
+                if item['.'] == keys[j] then
+                    if #item == 0 then
+                        tinsert(attr, item['.'])
+                        attr[item['.']] = item['*']
+                        i1 = i1 - 1
+                        item = nil
+                    end
+                    break
+                end
+            end
+        end
+        doc[i1] = item
+    end
+    for i = i1 + 1, #doc do doc[i] = nil end
+    doc['@'] = #attr > 0 and attr or nil
+    return doc
+end -- }}}
+lrm.Simplify = function (docs, keys) -- {{{
+    for _, doc in ipairs(docs) do docs[_] = Simplify(doc, keys) end
+end -- }}}
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --
+lrm.threData = 512 -- threshold
+lrm.threItem = 8   -- threshold
 local rmlstring = function (s) -- {{{
     local q = (strfind(s, "^'") or not strfind(s, '"')) and '"' or "'"
     return q..strgsub(s, '([^\\])'..q..'(%s)', '%1\\'..q..'%2')..q
@@ -272,7 +304,7 @@ local function dumpLom (node, mode) -- {{{ RML format: mode nil/tbm-strict,0/all
     end -- }}}
     res = node['*'] and lrm.rmldata(node['*']) or ''
     local foldb, folde = '', ''
-    if strlen(res) > 512 or #node > 4 then foldb, folde = fold_b, fold_e end
+    if strlen(res) > lrm.threData or #node > lrm.threItem then foldb, folde = fold_b, fold_e end
     if strfind(res, '\n') or #node > 0 then
         res = strfind(res, '\n') and ' '..foldb..'\n'..res or (res == '' and ' ' or ' '..res..' ')..foldb
         if #node == 0 then res = res..folde end

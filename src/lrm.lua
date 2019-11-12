@@ -192,24 +192,25 @@ lrm.RmlBuild = function (rmlfile, mode) -- toprml, doctree = lrm.RmlBuild(rootfi
     return toprml, doctree
 end -- }}}
 local function Simplify (doc, keys) -- {{{
-    if (not doc['*'] or doc['*'] == '') and #doc == 0 then return
-    end
+    if (not doc['*'] or doc['*'] == '') and (not doc['@']) and #doc == 0 then return end
     local attr = doc['@'] or {}
     local i1 = 0
     for i = 1, #doc do
         local item = Simplify(doc[i], keys)
         if item then
             i1 = i1 + 1
+            local found, index = 0
             for j = 1, #keys do
-                if item['.'] == keys[j] then
-                    if #item == 0 then
-                        tinsert(attr, item['.'])
-                        attr[item['.']] = item['*']
-                        i1 = i1 - 1
-                        item = nil
-                    end
-                    break
+                if item['.'] == keys[j] and #item == 0 and not item['@'] then
+                    index = j
+                    found = found + 1
                 end
+            end
+            if found == 1 then
+                tinsert(attr, item['.'])
+                attr[item['.']] = item['*']
+                i1 = i1 - 1
+                item = nil
             end
         end
         doc[i1] = item
@@ -220,6 +221,7 @@ local function Simplify (doc, keys) -- {{{
 end -- }}}
 lrm.Simplify = function (docs, keys) -- {{{
     for _, doc in ipairs(docs) do docs[_] = Simplify(doc, keys) end
+    return docs -- for cascade
 end -- }}}
 -- ======================================================================== --
 -- Output

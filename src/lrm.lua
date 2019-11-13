@@ -194,30 +194,30 @@ end -- }}}
 local function Simplify (doc, keys) -- {{{
     if (not doc['*'] or doc['*'] == '') and (not doc['@']) and #doc == 0 then return end
     local attr = doc['@'] or {}
-    local i1 = 0
+    local found, i1, index = 0, 1
     for i = 1, #doc do
         local item = Simplify(doc[i], keys)
+        doc[i1] = item
         if item then
-            i1 = i1 + 1
-            local found, index = 0
             for j = 1, #keys do
                 if item['.'] == keys[j] and #item == 0 and not item['@'] then
-                    index = j
+                    index = i1
                     found = found + 1
+                    break
                 end
             end
-            if found == 1 then
-                tinsert(attr, item['.'])
-                attr[item['.']] = item['*']
-                i1 = i1 - 1
-                item = nil
-            end
+            i1 = i1 + 1
         end
-        doc[i1] = item
+    end
+    if found == 1 then
+        tinsert(attr, doc[index]['.'])
+        attr[doc[index]['.']] = doc[index]['*']
+        i1 = i1 - 1
+        for j = index, i1 do doc[j] = doc[j + 1] end
     end
     for i = i1 + 1, #doc do doc[i] = nil end
     doc['@'] = #attr > 0 and attr or nil
-    return doc
+    return ((doc['*'] and doc['*'] ~= '') or doc['@'] or #doc > 0) and doc or nil
 end -- }}}
 lrm.Simplify = function (docs, keys) -- {{{
     for _, doc in ipairs(docs) do docs[_] = Simplify(doc, keys) end

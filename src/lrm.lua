@@ -335,7 +335,7 @@ lrm.Dump = function (docs) -- {{{ dump table -- rml is of multiple document form
         '\n# vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1' -- editor hint
 end -- }}}
 -- ======================================================================== --
-if #arg > 0 then -- service for fast checking object model -- {{{
+if arg and #arg > 0 and strgsub(arg[0], '^.*/', '') == 'lrm.lua' then -- service for checking object model -- {{{
     local rml = (arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Erro open '..arg[1])
     rml = lrm.Parse(rml:read('a'), 0)
     print(rml['?'][1] or lrm.Dump(rml))

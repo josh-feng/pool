@@ -317,7 +317,7 @@ doc2|h1:
 msg = msg or rml:close()
 if msg or not status then error('RML QA failed @'..line..': '..msg, 1) end
 -- }}}
-if #arg > 0 then -- service for fast checking rml syntax -- {{{
+if arg and #arg > 0 and string.gsub(arg[0], '^.*/', '') == 'lrps.lua' then -- service to check rml syntax -- {{{
     rml = lrp(true, false)
     status, msg, line = rml:parse(
         ((arg[1] == '-' and io.stdin or io.open(arg[1], 'r')) or error('Failed open '..arg[1])):read('a')

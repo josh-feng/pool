@@ -41,8 +41,7 @@ local strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
                 res[k] = qo or v
                 tinsert(res, token)
             elseif strfind(token, '%S') then
-                tinsert(res, token)
-                order = token
+                order = token -- tinsert(res, token)
             end
         end
     end
@@ -58,7 +57,7 @@ local match = function (targ, tmpl, fExact) -- {{{ -- match assignment in tmpl
     end
     return true
 end -- }}}
-local rPath = function (doc, path) -- {{{ return doc/rml-node table, missingTag
+local function rPath (doc, path) -- {{{ return doc/rml-node table, missingTag
     if (not path) or path == '' or #doc == 0 then return doc, path end
     -- NB: xpointer does not have standard treatment -- A/B, /A/B[@attr="val",@bb='4']
     local tag, attr, idx
@@ -223,6 +222,7 @@ lrm.Simplify = function (docs, keys) -- {{{
     for _, doc in ipairs(docs) do docs[_] = Simplify(doc, keys) end
     return docs -- for cascade
 end -- }}}
+lrm.rPath = rPath
 -- ======================================================================== --
 -- Output
 -- ======================================================================== --

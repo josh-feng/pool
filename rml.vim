@@ -99,30 +99,35 @@ hi def link rmlTagProp  NONE
 
 hi def link rmlError    Error
 "}}}
-
+let &cpo = s:cpo_save
+unlet s:cpo_save
+let &cms = ' # %s'
+let b:current_syntax = "rml"
 " ------------------  paste hook ------------------"{{{
 " execute 'syntax include @rmlPasteHook '.$VIMRUNTIME.'/syntax/'.s:paste.'.vim'
 " syn include @rmlPasteHook   $VIMRUNTIME/syntax/lua.vim
+unlet b:current_syntax
 syn include @rmlPasteHookLua $VIMRUNTIME/syntax/lua.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<lua\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookLua
 
+unlet b:current_syntax
 syn include @rmlPasteHookTex $VIMRUNTIME/syntax/tex.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<tex\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookTex
 
+unlet b:current_syntax
 syn include @rmlPasteHookCpp $VIMRUNTIME/syntax/cpp.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<cpp\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookCpp
+
+unlet b:current_syntax
+syn include @rmlPasteHookSh $VIMRUNTIME/syntax/sh.vim
+syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\S*sh\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHookSh
 " ------------------  paste hook ------------------"}}}
-
-let &cpo = s:cpo_save
-unlet s:cpo_save
-
-let &cms = ' # %s'
-
-let b:current_syntax = "rml"
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

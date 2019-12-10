@@ -38,8 +38,7 @@ local strToTbl = function (tmpl, sep, set) -- {{{ -- build the tmpl from string
             local k, v = strmatch(token, '([^'..set..']+)'..set..'(.*)')
             if k and v and k ~= '' then
                 local q, qo = strmatch(v, '^([\'"])(.*)%1$') -- trim qotation mark
-                res[k] = qo or v
-                tinsert(res, token)
+                res[k] = qo or v -- tinsert(res, token)
             elseif strfind(token, '%S') then
                 order = token -- tinsert(res, token)
             end
@@ -194,12 +193,16 @@ local function Simplify (doc, keys) -- {{{
     if (not doc['*'] or doc['*'] == '') and (not doc['@']) and #doc == 0 then return end
     local attr = doc['@'] or {}
     local found, i1, index = 0, 1
+    local keyTarg, attTarg
     for i = 1, #doc do
         local item = Simplify(doc[i], keys)
         doc[i1] = item
         if item then
             for j = 1, #keys do
-                if item['.'] == keys[j] and #item == 0 and not item['@'] then
+                local key, att = string.match(keys[j], '^([^|]*)|?(.*)$') -- tag w/ single attr ?
+                att = att ~= '' and (item['@'] and #(item['@']) == 1 and item['@'][att]) or (not item['@'])
+                if item['.'] == keys[j] and #item == 0 and att then
+                    keyTarg, attTarg = key, att
                     index = i1
                     found = found + 1
                     break
@@ -209,8 +212,13 @@ local function Simplify (doc, keys) -- {{{
         end
     end
     if found == 1 then
-        tinsert(attr, doc[index]['.'])
-        attr[doc[index]['.']] = doc[index]['*']
+        if type(attTarg) == 'string' then -- attr
+            attr[keyTarg] = attTarg
+            tinsert(attr, keyTarg)
+        else -- txt
+            tinsert(attr, doc[index]['.'])
+            attr[doc[index]['.']] = doc[index]['*']
+        end
         i1 = i1 - 1
         for j = index, i1 do doc[j] = doc[j + 1] end
     end

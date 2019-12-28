@@ -129,5 +129,11 @@ syn include @rmlPasteHookSh $VIMRUNTIME/syntax/sh.vim
 syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
     \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<\S*sh\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
     \ extend contains=@Spell,@rmlPasteHookSh
+
+unlet b:current_syntax
+syn include @rmlPasteHookMd $VIMRUNTIME/syntax/markdown.vim
+syn region  rmlPaste    matchgroup=rmlCDATA nextgroup=rmlComment fold nextgroup=rmlComment,rmlError
+    \ start="\(\(:\|=\)\s\+\(#[^\n]*\n\s*\)\?\)\@<=<md\[\z([^\]]*\)\]" end="\[\z1\]>\(\s\|$\)\@="
+    \ extend contains=@Spell,@rmlPasteHookMd
 " ------------------  paste hook ------------------"}}}
 " vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

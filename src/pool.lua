@@ -30,7 +30,7 @@ end -- }}} NB: not collected by gc immediately
 local function polymorphism (o, mt, ...) -- {{{ constructor for objects
     local mtt = mt.__index -- metatable template
     if mtt then
-        for _, v in pairs(mtt) do if type(v) == 'table' then o[_] = cloneTbl(v) end end -- dupe the table
+        for _, v in pairs(mtt) do if o[_] == v and type(v) == 'table' then o[_] = cloneTbl(v) end end -- dupe table
         mtt = getmetatable(mtt)
         if mtt then polymorphism(o, mtt, ...) end
     end
@@ -58,6 +58,8 @@ setmetatable(class, {
     __metatable = true;
     __call = function (c, tmpl) -- class {{{
         if 'table' ~=  type(tmpl) then error('Class declaration:'..tostring(t), 2) end
+        if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
+        if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
         local omt, creator = {}, (type(tmpl[1]) == 'table') and tmpl[1][1]
         if creator then -- baseClass
             creator = c.list[creator] or error(' bad base class: '..tostring(tmpl[1][1]), 2)
@@ -70,8 +72,6 @@ setmetatable(class, {
             for k, v in pairs(tmpl[1]) do if type(k) == 'string' then omt[k] = v end end -- newly defined operators
         end
         tmpl = cloneTbl(tmpl) -- class template closure
-        if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
-        if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
         omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil -- poly & remove reach from object
         if creator then
             creator.__gc = nil -- disable extra tmpl destructor

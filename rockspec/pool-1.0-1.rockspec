@@ -7,14 +7,13 @@ source = {
    -- dir = "pool-1.0",
 }
 description = {
-   summary = "Poorman's object-oriented lua (POOL) and Reduced Markup Language (RML) support.",
+   summary = "Poorman's object-oriented lua (POOL)",
    detailed = [[
       POOL supports light OO programming.
-      RML works like a punctuation system for data serializtion.
    ]],
    homepage = "http://github.com/josh-feng/pool",
    license = "MIT",
-   -- labels = {"object", "linux", "rml"}
+   labels = {"object", "linux"}
 }
 dependencies = {
    "lua >= 5.1"
@@ -23,15 +22,13 @@ build = {
    type = "builtin",
    modules = {
       pool = "src/pool.lua", -- class (POOL)
-      lrm = "src/lrm.lua", -- Reduced Markup Language (RML)
-      lrps = "src/lrps.lua", -- RML script(lua) parser
-      lrp = { -- RML c parser: c module written in C/++
-         sources = {"src/lrp.cpp"},
-         defines = {},
-         libraries = {},
-         incdirs = {"src"},
-         libdirs = {"src"}
-      }
+      -- lrp = { -- RML c parser: c module written in C/++
+      --    sources = {"src/lrp.cpp"},
+      --    defines = {},
+      --    libraries = {},
+      --    incdirs = {"src"},
+      --    libdirs = {"src"}
+      -- }
    },
    copy_directories = {"doc", "test"}
 }

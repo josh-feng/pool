@@ -1,18 +1,17 @@
 #!/usr/bin/env lua
--- ======================================================================== --
--- POOL (Poorman's object-oriented lua)
--- MIT License Copyright (c) 2019 Josh Feng
--- ======================================================================== --
--- for efficiency, announce them as local variables
+-- ====================================================================== --
+-- POOL (Poorman's object-oriented lua)    MIT License (c) 2019 Josh Feng --
 local pairs, error, tostring, type, getmetatable, setmetatable, rawset =
-      pairs, error, tostring, type, getmetatable, setmetatable, rawset
+      pairs, error, tostring, type, getmetatable, setmetatable, rawset -- for efficiency
 
 local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}
     for k, v in pairs(src) do
-        if 'string' == type(k) then targ[k] = type(v) == 'table' and cloneTbl(v, mt and getmetatable(v)) or v end
+        if 'string' == type(k) then
+            targ[k] = type(v) == 'table' and cloneTbl(v, mt and getmetatable(v)) or v
+        end
     end
-    if mt then setmetatable(targ, mt) end -- No trace of src, since object is pretty flat
+    if mt then setmetatable(targ, mt) end -- No trace of src, since object is flat
     return targ
 end -- }}}
 
@@ -30,20 +29,24 @@ end -- }}} NB: not collected by gc immediately
 local function polymorphism (o, mt, ...) -- {{{ constructor for objects
     local mtt = mt.__index -- metatable template
     if mtt then
-        for _, v in pairs(mtt) do if o[_] == v and type(v) == 'table' then o[_] = cloneTbl(v) end end -- dupe table
+        for _, v in pairs(mtt) do -- dupe table
+            if o[_] == v and type(v) == 'table' then o[_] = cloneTbl(v) end
+        end
         mtt = getmetatable(mtt)
         if mtt then polymorphism(o, mtt, ...) end
     end
     if mt['<'] then mt['<'](o, ...) end -- rawget is not necessary
 end -- }}}
 
-local class = { -- {{{
+local class = {
     id = ''; -- version control
     list = {}; -- class record
-    copy = function (c, o) return cloneTbl(o, getmetatable(o) or error('bad object', 2)) end; -- duplicate object o
+    copy = function (c, o) -- duplicate object o
+        return cloneTbl(o, getmetatable(o) or error('bad object', 2))
+    end;
 }
 
-function class:new (o, ...) -- {{{
+function class:new (o, ...) -- {{{ duplicate the object
     o = (getmetatable(o) or error('bad object', 2))[1] -- class creator
     if not self.list[o] then error('bad object', 2) end
     return o(...)
@@ -62,17 +65,20 @@ setmetatable(class, {
         if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
         local omt, creator = {}, (type(tmpl[1]) == 'table') and tmpl[1][1]
         if creator then -- baseClass
-            creator = c.list[creator] or error(' bad base class: '..tostring(tmpl[1][1]), 2)
+            creator = c.list[creator] or error('bad base class: '..tostring(tmpl[1][1]), 2)
             for k, v in pairs(creator) do omt[k] = v end -- inherite operators
         else
             omt.__newindex = setVar -- forbid new field addition
             omt.__gc = annihilator
         end
         if type(tmpl[1]) == 'table' then
-            for k, v in pairs(tmpl[1]) do if type(k) == 'string' then omt[k] = v end end -- newly defined operators
+            for k, v in pairs(tmpl[1]) do -- newly defined operators
+                if type(k) == 'string' then omt[k] = v end
+            end
         end
         tmpl = cloneTbl(tmpl) -- class template closure
-        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil -- poly & remove reach from object
+        -- polymorphism & remove their access from object
+        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil
         if creator then
             creator.__gc = nil -- disable extra tmpl destructor
             setmetatable(tmpl, creator)
@@ -90,49 +96,8 @@ setmetatable(class, {
         omt[1] = creator
         return creator
     end; -- }}}
-}) -- }}}
-
--- {{{ ==================  demo and self-test (QA)  ========================== TODO move to regression
-local base = class {
-    value = 1;
-    variant = 1;
-
-    { -- metatable: operator
-        __add = function (o1, o2)
-            local o = class:new(o1)
-            o.value = o1.value - o2.value
-            return o
-        end;
-    };
-
-    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
-}
-
-local test = class {
-    extra = {};
-
-    { -- metatable: inherit class 'base'
-        base;
-        __add = function (o1, o2) return o1.value + o2.value end; -- override
-    };
-
-    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
-}
-
-local obj1, obj2, obj3 = base(3), test(2), test()
-
-if -- failing conditions:
-    obj1.value ~= 3 or obj2.extra ~= 4 or obj3.value ~= 1 -- constructor
-    or obj2.variant ~= 1 or obj3.extra ~= 0 -- inheritance
-    or ((obj1 + obj2).value ~= 1) -- operator following base obj1
-    or (obj2 + obj3 ~= 3) -- operator following base obj2
-    or (class:parent(test) ~= base) -- aux function
-    or pcall(function () obj2.var = 1 end) -- object making new var
-    or pcall(function () obj3['<'] = 1 end) -- object constructor
-    or pcall(function () class(1) end) -- bad class declaration
-then error('Class QA failed.', 1)
-else class.list = {} end -- }}}
+})
 
 return class
--- ======================================================================== --
+-- ====================================================================== --
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

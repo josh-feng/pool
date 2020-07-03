@@ -1,21 +1,30 @@
 # Poorman's object-oriented lua (Pool)
 
-Lua itself provides rich features to implement some flavor of object-oriented programming.
+Lua itself provides rich features to implement some flavors of object-oriented programming.
 The module, 'pool.lua', in 'src' folder is all we need.
+We usually assign the module return (function-)value to the variable, 'class',
+and call 'class' with a table-value argument as the class template.
 
 **Example: Initialization**
 
-    class = require('pool')
-    base = class {
+Class member variables are all public. Undertermined member variables can be assigned with 'false'.
+
+```lua
+    class = require('pool')     -- class 'keyword'
+    base = class {              -- the base class
         field = 1;
+        old = false;
+        new = false;
     }
-    v1, v2 = base(), base()
-    print(v1.field + v2.field)    --> 2
+    v1, v2 = base(), base()     -- instantiate
+    print(v1.field + v2.field)  --> 2
+```
 
 **Example: Member Function**
 
 Class member functions are first class values
 
+```lua
     class = require('pool')
     base = class {
         -- member variables
@@ -28,10 +37,11 @@ Class member functions are first class values
     }
     v1, v2 = base(), base()
     print(v1:func1(2) + v2:func1(3))    --> 12.0
-
+```
 
 **Example: Table Value Default**
 
+```lua
     class = require('pool')
     base = class {
         field = {};
@@ -39,9 +49,11 @@ Class member functions are first class values
     v1, v2 = base(), base()
     v1 field[1], v2.field[1] = 2, 3
     print(v1.field[1] + v2.field[1])    --> 5
+```
 
 **Example: Constructor/Destructor**
 
+```lua
     class = require('pool')
     base = class {
         -- member variables
@@ -57,6 +69,7 @@ Class member functions are first class values
     }
     v1, v2 = base(1), base(2)
     print(v1:method(2) + v2:method(3))    --> 12.0
+```
 
 **Example: Member Function Overload**
 

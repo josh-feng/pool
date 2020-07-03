@@ -2,8 +2,34 @@
 
 Lua itself provides rich features to implement some flavors of object-oriented programming.
 The module, 'pool.lua', in 'src' folder is all we need.
+
+
 We usually assign the module return (function-)value to the variable, 'class',
 and call 'class' with a table-value argument as the class template.
+A series of coding examples with increasing complexity will
+follow the Usage paradigm.
+
+**Usage paradigm**
+
+```lua
+    class = require('pool')
+    myBaseClass = class {
+        field = false;
+
+        ['<'] = function (o, v) o.field ... end; -- constructor
+        ['>'] = function (o) end;                -- destructor
+
+        func1 = function (o, ...) o.field ... end;
+    }
+
+    o = myBaseClass(1)
+    o.field = o:func1(...)
+```
+
+- class variables are public, and addressed with '.'
+- class memeber functions are public, and called with ':'
+- constructor ['<'] is optional, and called when creating a new object
+- destructor ['>'] is optional, and called by lua's garbage collector
 
 **Example: Initialization**
 
@@ -91,21 +117,6 @@ Under construction.
 
 Namespace/variable-privacy is do-able, but expensive with \_ENV
 Class member functions are first class values
-
-**Usage paradigm**
-
-    class = require('pool')
-    myBaseClass = class {
-        field = false;
-        ['<'] = function (o, v) o.field = v or o.field end; -- constructor
-        ['>'] = function (o) end;                           -- destructor
-        func1 = function (o, ...) ... end;
-    }
-    o = myBaseClass(1)
-    o.field = o:func1(...)
-
-class variables are public, and addressed with '.'
-class memeber functions are public, and called with ':'
 
 **Polymorphism/Inheritance**
 

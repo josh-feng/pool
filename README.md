@@ -4,26 +4,28 @@ Lua itself provides rich features to implement some flavors of object-oriented p
 The module, 'pool.lua', in 'src' folder is all we need.
 
 
-We usually assign the module return (function-)value to the variable, 'class',
-and call 'class' with a table-value argument as the class template.
+The design is to use the module return (function-)value as the *keyword*, **class**,
+and then use this *keyword* to define a class
+when calling **class** with a table-value argument as the class template.
 A series of coding examples with increasing complexity will
 follow the Usage paradigm.
 
 **Usage paradigm**
 
 ```lua
-    class = require('pool')
-    myBaseClass = class {
-        field = false;
+class = require('pool')
 
-        ['<'] = function (o, v) o.field ... end; -- constructor
-        ['>'] = function (o) end;                -- destructor
+myBaseClass = class {
+    field = false;
 
-        func1 = function (o, ...) o.field ... end;
-    }
+    ['<'] = function (o, v) o.field ... end; -- constructor
+    ['>'] = function (o) end;                -- destructor
 
-    o = myBaseClass(1)
-    o.field = o:func1(...)
+    func1 = function (o, ...) o.field ... end;
+}
+
+o = myBaseClass(1)
+o.field = o:func1(...)
 ```
 
 - class variables are public, and addressed with '.'
@@ -36,14 +38,14 @@ follow the Usage paradigm.
 Class member variables are all public. Undertermined member variables can be assigned with 'false'.
 
 ```lua
-    class = require('pool')     -- class 'keyword'
-    base = class {              -- the base class
-        field = 1;
-        old = false;
-        new = false;
-    }
-    v1, v2 = base(), base()     -- instantiate
-    print(v1.field + v2.field)  --> 2
+class = require('pool')     -- class 'keyword'
+base = class {              -- the base class
+    field = 1;
+    old = false;
+    new = false;
+}
+v1, v2 = base(), base()     -- instantiate
+print(v1.field + v2.field)  --> 2
 ```
 
 **Example: Member Function**

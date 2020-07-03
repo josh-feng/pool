@@ -1,12 +1,13 @@
 # Poorman's object-oriented lua (Pool)
 
-Lua itself provides rich features to implement some flavors of object-oriented programming.
+Lua itself provides rich features to implement some flavors of object-oriented programming
+in script level.
 The module, 'pool.lua', in 'src' folder is all we need.
 
-The design is to use the module return value as the *keyword*, **class**,
+The design is to use the module return value as the *keyword* '**class**',
 for defining classes.
 On invoking this *keyword* with a table as the class template,
-a object creator function is returned.
+an object creator function is returned.
 Objects are generated when calling object creators.
 
 A series of coding examples with increasing complexity show the supporting features.
@@ -16,6 +17,7 @@ A series of coding examples with increasing complexity show the supporting featu
 ```lua
 class = require('pool')
 
+-- object creator based on the class template
 myBaseClass = class {
     field = false;
 
@@ -36,13 +38,13 @@ o.field = o:func1(...)
 
 **Example: Initialization**
 
+The defined class is handled thru the returned object creator.
 Class member variables are all public.
 Member variables usually have 'false' as the default.
-The defined class is handled thru the returned object creator.
 
 ```lua
 class = require('pool')     -- class 'keyword'
-base = class {              -- the base class == object creator
+base = class {              -- the base class
     field = 1;
     old = false;
     new = false;
@@ -129,7 +131,7 @@ print(v1.field[1] + v2.field[1])    --> 3
 print(v1.['<'])                     --> nil
 ```
 
-The constructor and destructor are not accessible.
+The constructor and destructor are not accessible directly.
 
 **Example: Member Function Override**
 
@@ -210,6 +212,12 @@ if -- failing conditions:
     or pcall(function () class(1) end) -- bad class declaration
 then error('Class QA failed.', 1) end
 ```
+
+The constructors and destructors through heritage are called in chain.
+Only single parent inheritage is supported.
+
+- **class:new(o)** returns the duplicate object without calling the constructor
+- **class:parent(o)** returns the parent class (object creator)
 
 **Example: Table Value Again**
 

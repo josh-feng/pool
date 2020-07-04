@@ -4,8 +4,7 @@ Lua itself provides rich features to implement some flavors of object-oriented p
 in script level.
 The module, 'pool.lua', in 'src' folder is all we need.
 
-The design is to use the module return value as the *keyword* '**class**',
-for defining classes.
+The design is to use the module return value as the *keyword* '**class**' for defining classes.
 On invoking this *keyword* with a table as the class template,
 an object creator function is returned.
 Objects are generated when calling object creators.
@@ -22,7 +21,7 @@ myBaseClass = class {
     field = false;
 
     ['<'] = function (o, v) o.field ... end; -- constructor
-    ['>'] = function (o) end;                -- destructor
+    ['>'] = function (o) ... end;            -- destructor
 
     func1 = function (o, ...) o.field ... end;
 }
@@ -60,7 +59,7 @@ changing their values is possible but a bad practice.
 
 The first argument for member function is the object.
 In C++, it would be called 'this', and lua would use 'self'.
-However, it is defined in the class template table,
+However, the member function is defined in the class template table scope,
 so we use **'o'** to represent the object.
 
 ```lua
@@ -216,23 +215,44 @@ then error('Class QA failed.', 1) end
 The constructors and destructors through heritage are called in chain.
 Only single parent inheritage is supported.
 
-- **class:new(o)** returns the duplicate object without calling the constructor
 - **class:parent(o)** returns the parent class (object creator)
+- **class:new(o)** returns the duplicate object after calling the constructor
+- **class:copy(o)** returns the duplicate object without calling the constructor
 
-**Example: Table Value Again**
+**Example: Release/Recovery**
+
+Creating new member entries is not allowed.
+Only string-indexed members are supported.
+Assigning nil to member entries resets them to the default.
 
 Under construction.
 
-**Example: Method (object type)**
+```lua
+```
+
+**Example: Table Value (including Object Value) Again**
+
+Table value is supported in the invidual mode.
 
 Under construction.
+
+```lua
+```
 
 ## Notice
 
-Namespace/variable-privacy is do-able, but expensive with \_ENV
-Class member functions are first class values
+Lua is a script, not a strong type programming language.
+If you are a hardcore object-oriented programer seeking
+the most advanced OOP features,
+then you would choose C++ or other languages.
 
-**Polymorphism/Inheritance**
+- Namespace/variable-privacy is do-able, but expensive with **\_ENV** mechanism.
+- New entries are prehibited
+- Object memebers can be recovered to the default value by assigning nil.
+
+Breaking the usage paradigm is possible, but not easy.
+
+Under construction.
 
 ```lua
 myChildClass = class {
@@ -250,4 +270,6 @@ o1 = myChildClass(1)
 o2 = myChildClass(2)
 print((o1 + o2).field)
 ```
+
+Please check out many applications in the 'examples' folder, and the files in 'doc' folder, too.
 

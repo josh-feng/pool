@@ -8,7 +8,7 @@ local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}
     for k, v in pairs(src) do
         if 'string' == type(k) then
-            targ[k] = type(v) == 'table' and cloneTbl(v, mt and getmetatable(v)) or v
+            targ[k] = type(v) == 'table' and cloneTbl(v, getmetatable(v)) or v
         end
     end
     if mt then setmetatable(targ, mt) end -- No trace of src, since object is flat
@@ -29,8 +29,10 @@ end -- }}} NB: not collected by gc immediately
 local function polymorphism (o, mt, ...) -- {{{ constructor for objects
     local mtt = mt.__index -- metatable template
     if mtt then
-        for _, v in pairs(mtt) do -- dupe table
-            if o[_] == v and type(v) == 'table' then o[_] = cloneTbl(v) end
+        if mt[2] then -- dupe table values
+            for _, v in pairs(mt[2]) do
+                if not o[_] then o[_] = cloneTbl(v, getmetatable(v)) end
+            end
         end
         mtt = getmetatable(mtt)
         if mtt then polymorphism(o, mtt, ...) end
@@ -41,9 +43,9 @@ end -- }}}
 local class = {
     id = ''; -- version control
     list = {}; -- class record
-    copy = function (c, o) -- duplicate object o
+    copy = function (c, o)
         return cloneTbl(o, getmetatable(o) or error('bad object', 2))
-    end;
+    end; -- duplicate object o
 }
 
 function class:new (o, ...) -- {{{ duplicate the object
@@ -63,6 +65,7 @@ setmetatable(class, {
         if 'table' ~=  type(tmpl) then error('Class declaration:'..tostring(t), 2) end
         if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
         if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
+
         local omt, creator = {}, (type(tmpl[1]) == 'table') and tmpl[1][1]
         if creator then -- baseClass
             creator = c.list[creator] or error('bad base class: '..tostring(tmpl[1][1]), 2)
@@ -77,6 +80,7 @@ setmetatable(class, {
             end
         end
         tmpl = cloneTbl(tmpl) -- class template closure
+
         -- polymorphism & remove their access from object
         omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil
         if creator then
@@ -85,6 +89,15 @@ setmetatable(class, {
             creator.__gc = annihilator -- recover
         end
         omt.__index = tmpl
+
+        omt[2] = {} -- table value default recovery (nil)
+        for k, v in pairs(tmpl) do
+            if type(v) == 'table' then
+                omt[2][k] = v
+                tmpl[k] = false -- table-value when recovered
+            end
+        end
+        if not next(omt[2]) then omt[2] = nil end
 
         creator = function (...) -- classes {{{ tmpl is the hidden class template
             local o = {}

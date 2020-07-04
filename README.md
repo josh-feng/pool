@@ -1,12 +1,10 @@
 # Poorman's object-oriented lua (Pool)
 
-Lua itself provides rich features to implement some flavors of object-oriented programming
-in script level.
+Lua itself provides rich features to implement some flavors of object-oriented programming in script level.
 The module, 'pool.lua', in 'src' folder is all we need.
 
-The design is to use the module return value as the *keyword* '**class**' for defining classes.
-On invoking this *keyword* with a table as the class template,
-an object creator function is returned.
+The design is to use the module returned value as the *keyword* '**class**' for defining classes.
+On invoking this *keyword* with a table as the class template, an object creator function is returned.
 Objects are generated when calling object creators.
 
 A series of coding examples with increasing complexity show the supporting features.
@@ -37,29 +35,32 @@ o.field = o:func1(...)
 
 **Example: Initialization**
 
-The defined class is handled thru the returned object creator.
+The class is handled thru the object creator.
 Class member variables are all public.
-Member variables usually have 'false' as the default.
+We usually set member variables 'false' as the default.
 
 ```lua
 class = require('pool')     -- class 'keyword'
 base = class {              -- the base class
     field = 1;
-    old = false;
     new = false;
 }
 v1, v2 = base(), base()     -- instantiate
 print(v1.field + v2.field)  --> 2
+
+v1.old = true               --> error: creating new entry is not allowed
 ```
+
+All entries should be declared in the class template.
 
 **Example: Member Function**
 
-Class member functions are first class values,
-changing their values is possible but a bad practice.
+Since functions are first class values in Lua,
+changing member functions to other types is possible, but a bad practice.
 
-The first argument for member function is the object.
-In C++, it would be called 'this', and lua would use 'self'.
-However, the member function is defined in the class template table scope,
+The guideline is to put the object as the first argument for member functions.
+In C++, it would be called 'this', and Lua would use 'self'.
+However, the member function is defined in the scope of the class template table,
 so we use **'o'** to represent the object.
 
 ```lua
@@ -80,8 +81,8 @@ v1.func1 = 1                        -- bad practice
 
 **Example: Table Value Default**
 
-Non-string index entry in the default table value will be ignored.
-However, it can be implemented in the constructor.
+In setting a member variable with a table as the default, non-string indexed entry will be ignored.
+However, non-string indexed entry can be implemented in the constructor.
 
 ```lua
 class = require('pool')
@@ -102,24 +103,37 @@ v1.field.item = 2
 print(v1.field.item + v2.field.item)    --> 3
 ```
 
+The 'field' member in the above example points to separate tables for object 'v1' and 'v2'.
+Using the *metatable* mechanism,
+we light-copy every table value in the class template for each object in initialization.
+This is useful in most applications.
+Making a member entry of a class poiting to a single table can be done in the constructor.
+
+
 **Example: Constructor/Destructor**
 
-We leave the traditional entry names, such as 'new' and '\_init', for reqular use.
-The special names, '<' and '>', are reserved,
-and the constructor can take more arguments.
+When choosing entry names for constructor an ddestructor,
+we leave the traditional entry names, such as 'new' and '\_init', for reqular use.
+The special names, '<' and '>', are reserved for them.
+The constructor can take more arguments.
 
 ```lua
 class = require('pool')
+
+local linktable = {}
+
 base = class {
     -- member variables
     old = 0;
     new = 1;
     _init = 2;
     field = {};
+    link = false;
 
     -- constructor
     ['<'] = function (o, v)
         o.field[1] = v
+        o.link = linktable -- all objects share the same linktable
     end;
     -- destructor
     ['>'] = function (o)
@@ -219,24 +233,82 @@ Only single parent inheritage is supported.
 - **class:new(o)** returns the duplicate object after calling the constructor
 - **class:copy(o)** returns the duplicate object without calling the constructor
 
-**Example: Release/Recovery**
+**Example: Release/Reset/Recover**
 
 Creating new member entries is not allowed.
 Only string-indexed members are supported.
 Assigning nil to member entries resets them to the default.
 
-Under construction.
-
 ```lua
+class = require('pool')
+base = class {
+    value = 0;
+    method = function (o, v) o.value = v or o.value end;
+}
+v = base()
+
+v.method = 1        --> bad practice, but legal
+print(v.method)     --> 1
+v.method = nil      --> reset to the default function
+v:method(2)
+print(v.value)      --> 2
 ```
 
 **Example: Table Value (including Object Value) Again**
 
-Table value is supported in the invidual mode.
-
-Under construction.
+Since table value is lightly copy for objects in initialization
+if table value is used in the class template,
+it will be reset to *false* when assigned nil.
+There is no way to invoke initialization again for member variables.
+Similarly for object values,
+setting nil will reset *false* instead.
 
 ```lua
+class = require('pool')
+base = class {
+    value = 0;
+}
+
+newClass = class { -- friend class
+    friend = base();
+}
+
+v = newClass()
+print(v.friend.value)   --> 0
+v.friend = nil
+print(v.friend)         --> false
+w = newClass()
+print(w.friend.value)   --> 0
+```
+
+**Example: More on Polymorphism**
+
+The order of constructors and destructors in polymorphism is shown below:
+
+```lua
+class = require('pool')
+base = class {
+    item = true;
+    value = 1;
+    ['<'] = function (o, v) print('base', o.value) end;
+    ['>'] = function (o) print('base object is gone') end;
+}
+
+main = class { { base };
+    value = { item = 0 };
+    ['<'] = function (o, v) print('main', o.value) end;
+    ['>'] = function (o) print('main object is gone') end;
+}
+
+derived = class { { main };
+    value = 0;
+}
+
+v = derived()   --> base    0
+                --> main    0
+print(v.item)   --> true
+v = nil         --> main object is gone
+                --> base object is gone
 ```
 
 ## Notice

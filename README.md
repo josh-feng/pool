@@ -1,13 +1,12 @@
 # Poorman's object-oriented lua (Pool)
 
-Lua itself provides rich features to implement some flavors of object-oriented programming in script level.
-The module, 'pool.lua', in 'src' folder is all we need.
+Lua itself provides rich features to implement some flavors of object-oriented programming
+in scripting level.
+The module is provied in a single file, 'src/pool.lua'.
 
 The design is to use the module returned value as the *keyword* '**class**' for defining classes.
 On invoking this *keyword* with a table as the class template, an object creator function is returned.
 Objects are generated when calling object creators.
-
-A series of coding examples with increasing complexity show the supporting features.
 
 ## Usage paradigm
 
@@ -177,7 +176,7 @@ v1.method = nil
 print(v1:method(3))         --> 9
 ```
 
-**Example: Inheritage/Polymorphism**
+**Example: Inheritance/Polymorphism**
 
 Lua's table operator feature is supported.
 If the firt entry of the class template is a table,
@@ -193,6 +192,8 @@ base = class {
     value = 1;
     variant = 1;
 
+    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
+
     { -- metatable: operator
         __add = function (o1, o2)
             local o = class:new(o1)
@@ -200,19 +201,16 @@ base = class {
             return o
         end;
     };
-
-    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
 }
 
-test = class {
+test = class (base) { -- 'base' is the parent class
     extra = {};
 
-    { -- metatable: inherit class 'base'
-        base;
+    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
+
+    { -- metatable:
         __add = function (o1, o2) return o1.value + o2.value end; -- override
     };
-
-    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
 }
 
 obj1, obj2, obj3 = base(3), test(2), test()
@@ -229,8 +227,8 @@ if -- failing conditions:
 then error('Class QA failed.', 1) end
 ```
 
-The constructors and destructors through heritage are called in chain.
-Only single parent inheritage is supported.
+The constructors and destructors through heritance are called in chain.
+Only single parent inheritance is supported.
 
 - **class:parent(o)** returns the parent class (object creator)
 - **class:new(o)** returns the duplicate object after calling the constructor
@@ -297,13 +295,13 @@ base = class {
     ['>'] = function (o) print('base object is gone') end;
 }
 
-main = class { { base };
+main = class (base) {
     value = { item = 0 };
     ['<'] = function (o, v) print('main', o.value) end;
     ['>'] = function (o) print('main object is gone') end;
 }
 
-derived = class { { main };
+derived = class (main) {
     value = 0;
 }
 

@@ -59,56 +59,59 @@ function class:parent (o) -- {{{ parent class
     return o and o[1] -- parent class (object creator)
 end -- }}}
 
+local function __class (tmpl, creator) -- class {{{ -- creator is the parent
+    if 'table' ~= type(tmpl) then error('Class declaration:'..tostring(t), 2) end
+    if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
+    if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
+
+    local omt = {}
+    if creator then -- baseClass
+        for k, v in pairs(creator) do omt[k] = v end -- inherite operators
+    else
+        omt.__newindex = setVar -- forbid new field addition
+        omt.__gc = annihilator
+    end
+    if type(tmpl[1]) == 'table' then
+        for k, v in pairs(tmpl[1]) do -- newly defined operators
+            if type(k) == 'string' then omt[k] = v end
+        end
+    end
+    tmpl = cloneTbl(tmpl) -- class template closure
+
+    -- polymorphism & remove their access from object
+    omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil
+    if creator then
+        creator.__gc = nil -- disable extra tmpl destructor
+        setmetatable(tmpl, creator)
+        creator.__gc = annihilator -- recover
+    end
+    omt.__index = tmpl
+
+    omt[2] = {} -- default table value and recovery
+    for k, v in pairs(tmpl) do
+        if type(v) == 'table' then
+            omt[2][k] = v
+            tmpl[k] = false -- table-value when reset w/ nil
+        end
+    end
+    if not next(omt[2]) then omt[2] = nil end
+
+    creator = function (...) -- classes {{{ tmpl is the hidden class template
+        local o = {}
+        setmetatable(o, omt) -- need member functions
+        polymorphism(o, omt, ...)
+        return o -- the object
+    end -- }}}
+    class.list[creator] = omt
+    omt[1] = creator
+    return creator
+end; -- }}}
+
 setmetatable(class, {
     __metatable = true;
-    __call = function (c, tmpl) -- class {{{
-        if 'table' ~=  type(tmpl) then error('Class declaration:'..tostring(t), 2) end
-        if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
-        if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
-
-        local omt, creator = {}, (type(tmpl[1]) == 'table') and tmpl[1][1]
-        if creator then -- baseClass
-            creator = c.list[creator] or error('bad base class: '..tostring(tmpl[1][1]), 2)
-            for k, v in pairs(creator) do omt[k] = v end -- inherite operators
-        else
-            omt.__newindex = setVar -- forbid new field addition
-            omt.__gc = annihilator
-        end
-        if type(tmpl[1]) == 'table' then
-            for k, v in pairs(tmpl[1]) do -- newly defined operators
-                if type(k) == 'string' then omt[k] = v end
-            end
-        end
-        tmpl = cloneTbl(tmpl) -- class template closure
-
-        -- polymorphism & remove their access from object
-        omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil
-        if creator then
-            creator.__gc = nil -- disable extra tmpl destructor
-            setmetatable(tmpl, creator)
-            creator.__gc = annihilator -- recover
-        end
-        omt.__index = tmpl
-
-        omt[2] = {} -- default table value and recovery
-        for k, v in pairs(tmpl) do
-            if type(v) == 'table' then
-                omt[2][k] = v
-                tmpl[k] = false -- table-value when reset w/ nil
-            end
-        end
-        if not next(omt[2]) then omt[2] = nil end
-
-        creator = function (...) -- classes {{{ tmpl is the hidden class template
-            local o = {}
-            setmetatable(o, omt) -- need member functions
-            polymorphism(o, omt, ...)
-            return o -- the object
-        end -- }}}
-        c.list[creator] = omt
-        omt[1] = creator
-        return creator
-    end; -- }}}
+    __call = function (c, cls) -- wrap the inheritance
+        return c.list[cls] and function (tpl) return __class(tpl, c.list[cls]) end or __class(cls)
+    end;
 })
 
 return class

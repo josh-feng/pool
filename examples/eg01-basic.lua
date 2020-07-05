@@ -10,6 +10,8 @@ local base = class {
     value = 1;
     variant = 1;
 
+    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
+
     { -- metatable: operator
         __add = function (o1, o2)
             local o = class:new(o1)
@@ -17,19 +19,16 @@ local base = class {
             return o
         end;
     };
-
-    ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
 }
 
-local test = class {
+local test = class (base) { -- inherit class 'base'
     extra = {};
 
-    { -- metatable: inherit class 'base'
-        base;
+    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
+
+    { -- metatable:
         __add = function (o1, o2) return o1.value + o2.value end; -- override
     };
-
-    ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
 }
 
 local obj1, obj2, obj3 = base(3), test(2), test()

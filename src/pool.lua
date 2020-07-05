@@ -29,7 +29,7 @@ end -- }}} NB: not collected by gc immediately
 local function polymorphism (o, mt, ...) -- {{{ constructor for objects
     local mtt = mt.__index -- metatable template
     if mtt then
-        if mt[2] then -- dupe table values
+        if mt[2] then -- default table values
             for _, v in pairs(mt[2]) do
                 if not o[_] then o[_] = cloneTbl(v, getmetatable(v)) end
             end
@@ -43,20 +43,20 @@ end -- }}}
 local class = {
     id = ''; -- version control
     list = {}; -- class record
-    copy = function (c, o)
+    copy = function (c, o) -- duplicate object o
         return cloneTbl(o, getmetatable(o) or error('bad object', 2))
-    end; -- duplicate object o
+    end;
 }
 
 function class:new (o, ...) -- {{{ duplicate the object
-    o = (getmetatable(o) or error('bad object', 2))[1] -- class creator
+    o = (getmetatable(o) or error('bad object', 2))[1] -- class (object creator)
     if not self.list[o] then error('bad object', 2) end
     return o(...)
 end -- }}}
 function class:parent (o) -- {{{ parent class
     o = (type(o) == 'table' and getmetatable(o) or self.list[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
-    return o and o[1] -- parent class creator
+    return o and o[1] -- parent class (object creator)
 end -- }}}
 
 setmetatable(class, {
@@ -90,11 +90,11 @@ setmetatable(class, {
         end
         omt.__index = tmpl
 
-        omt[2] = {} -- table value default recovery (nil)
+        omt[2] = {} -- default table value and recovery
         for k, v in pairs(tmpl) do
             if type(v) == 'table' then
                 omt[2][k] = v
-                tmpl[k] = false -- table-value when recovered
+                tmpl[k] = false -- table-value when reset w/ nil
             end
         end
         if not next(omt[2]) then omt[2] = nil end

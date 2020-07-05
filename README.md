@@ -24,7 +24,7 @@ myBaseClass = class {
     func1 = function (o, ...) o.field ... end;
 }
 
-o = myBaseClass(1)      -- create a object
+o = myBaseClass(1)      -- create an object
 o.field = o:func1(...)
 ```
 
@@ -43,12 +43,15 @@ We usually set member variables 'false' as the default.
 class = require('pool')     -- class 'keyword'
 base = class {              -- the base class
     field = 1;
-    new = false;
+
+    __init = false;         -- not the constructor, just a regular entry
+    new = false;            -- not the  constructor, just a regular entry
 }
 v1, v2 = base(), base()     -- instantiate
 print(v1.field + v2.field)  --> 2
+print(v1.__init)            --> false
 
-v1.old = true               --> error: creating new entry is not allowed
+v1.old = true               --> error: creating a new entry is not allowed
 ```
 
 All entries should be declared in the class template.
@@ -112,8 +115,8 @@ Making a member entry of a class poiting to a single table can be done in the co
 
 **Example: Constructor/Destructor**
 
-When choosing entry names for constructor an ddestructor,
-we leave the traditional entry names, such as 'new' and '\_init', for reqular use.
+When choosing entry names for constructor an destructor,
+we leave the traditional names, such as 'new' and '\_\_init', for reqular use.
 The special names, '<' and '>', are reserved for them.
 The constructor can take more arguments.
 
@@ -322,25 +325,21 @@ then you would choose C++ or other languages.
 - New entries are prehibited
 - Object memebers can be recovered to the default value by assigning nil.
 
-Breaking the usage paradigm is possible, but not easy.
-
-Under construction.
+Breaking the usage paradigm is possible, but not recommanded.
+Usually it involves some up-vales.
 
 ```lua
-myChildClass = class {
-    { myBaseClass;                      -- parent class
-        __add = function (o1, o2)       -- o1 + o2
-            local o = class:copy(o1)
-            o.field = o1.field + o2.field
-            ...
-            return o
-        end;
-    };
-    newfield = false;
+alias = function (o) print('version 1') end
+
+myClass = class {
+    method = function (o, ...) alias(o, ...) end;
 }
-o1 = myChildClass(1)
-o2 = myChildClass(2)
-print((o1 + o2).field)
+
+o = myClass()
+o:method()      --> version 1
+
+alias = function (o) print('version 2') end
+o:method()      --> version 2
 ```
 
 Please check out many applications in the 'examples' folder, and the files in 'doc' folder, too.

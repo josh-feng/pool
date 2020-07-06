@@ -44,7 +44,7 @@ base = class {              -- the base class
     field = 1;
 
     __init = false;         -- not the constructor, just a regular entry
-    new = false;            -- not the  constructor, just a regular entry
+    new = false;            -- not the constructor, just a regular entry
 }
 v1, v2 = base(), base()     -- instantiate
 print(v1.field + v2.field)  --> 2
@@ -178,12 +178,10 @@ print(v1:method(3))         --> 9
 
 **Example: Inheritance/Polymorphism**
 
-Lua's table operator feature is supported.
-If the firt entry of the class template is a table,
+Lua's table **operator** feature is supported.
+If the first entry of the class template is a table,
 which is used for the object's *meta-table*.
 Operators are defined in this *meta-table*.
-If the first entry of this *meta-table* is a defined class,
-it will be used as the parent class.
 Derived class can have differnt operators from the parrent class.
 
 ```lua
@@ -227,10 +225,10 @@ if -- failing conditions:
 then error('Class QA failed.', 1) end
 ```
 
-The constructors and destructors through heritance are called in chain.
+The constructors and destructors through inheritance are called in chain.
 Only single parent inheritance is supported.
 
-- **class:parent(o)** returns the parent class (object creator)
+- **class:parent(o)** returns the parent class (its object creator)
 - **class:new(o)** returns the duplicate object after calling the constructor
 - **class:copy(o)** returns the duplicate object without calling the constructor
 

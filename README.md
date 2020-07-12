@@ -2,7 +2,7 @@
 
 Lua itself provides rich features to implement some flavors of object-oriented programming
 in scripting level.
-The module is provied in a single file, 'src/pool.lua'.
+This table-based OO module is implemented in a single file (**src/pool.lua**).
 
 The design is to use the module returned value as the *keyword* '**class**' for defining classes.
 On invoking this *keyword* with a table as the class template, an object creator function is returned.
@@ -17,14 +17,21 @@ class = require('pool')
 myBaseClass = class {
     field = false;
 
+    func1 = function (o, ...) o.field ... end;
+
     ['<'] = function (o, v) o.field ... end; -- constructor
     ['>'] = function (o) ... end;            -- destructor
 
-    func1 = function (o, ...) o.field ... end;
+    { -- lua table operators : optional
+        __add = function (o, ...) ... end;
+        ...
+    };
 }
 
-o = myBaseClass(1)      -- create an object
-o.field = o:func1(...)
+o1, o2 = myBaseClass(1)     -- create an object (table-based)
+o1.field = o1:func1(...)
+
+print(o1 + o2)              -- table-structure operators
 ```
 
 - class variables are public, and addressed with **'.'**
@@ -46,11 +53,15 @@ base = class {              -- the base class
     __init = false;         -- not the constructor, just a regular entry
     new = false;            -- not the constructor, just a regular entry
 }
-v1, v2 = base(), base()     -- instantiate
+
+v1, v2 = base(), base()     -- new objects (instantiate)
+
 print(v1.field + v2.field)  --> 2
 print(v1.__init)            --> false
 
 v1.old = true               --> error: creating a new entry is not allowed
+
+v1 = nil                    -- delete the object
 ```
 
 All entries should be declared in the class template.
@@ -76,6 +87,7 @@ base = class {
        return math.pow(o.field, tonumber(v) or 1)
     end;
 }
+
 v1, v2 = base(), base()
 print(v1:func1(2) + v2:func1(3))    --> 12.0
 v1.func1 = 1                        -- bad practice
@@ -94,6 +106,7 @@ base = class {
         item = 1;
     };
 }
+
 v1, v2 = base(), base()
 
 print(v1.field[1])                  --> nil
@@ -109,14 +122,14 @@ The 'field' member in the above example points to separate tables for object 'v1
 Using the *metatable* mechanism,
 we light-copy every table value in the class template for each object in initialization.
 This is useful in most applications.
-Making a member entry of a class poiting to a single table can be done in the constructor.
+Making a member entry of a class poiting to a specific table can be done in the constructor.
 
 
 **Example: Constructor/Destructor**
 
-When choosing entry names for constructor an destructor,
-we leave the traditional names, such as 'new' and '\_\_init', for reqular use.
-The special names, '<' and '>', are reserved for them.
+When choosing entry names for constructor and destructor,
+we leave the traditional names, such as 'new' and '\_\_init', for reqular use;
+instead, the special names, '<' and '>', are reserved for them.
 The constructor can take more arguments.
 
 ```lua
@@ -141,9 +154,10 @@ base = class {
     ['>'] = function (o)
     end;
 }
+
 v1, v2 = base(1), base(2)
 print(v1.field[1] + v2.field[1])    --> 3
-print(v1.['<'])                     --> nil
+print(v1['<'])                      --> nil
 ```
 
 The constructor and destructor are not accessible directly.
@@ -152,7 +166,7 @@ The constructor and destructor are not accessible directly.
 
 Defined class is handled thru the object creator.
 Member functions can be overridden in objects,
-but the class member function is intact as in the class template.
+while the class member function is intact as in the class template.
 
 Object member variable/function can be recovered when assigned **'nil'**.
 
@@ -166,6 +180,7 @@ base = class {
         return v * v
     end;
 }
+
 v1 = base(1)
 v1.method = function (o, v) o.field = 2 * v end
 v2 = base(3)
@@ -178,9 +193,11 @@ print(v1:method(3))         --> 9
 
 **Example: Inheritance/Polymorphism**
 
+The parent class is supplied as the only argument for the keyword
+**class**, then the derived class template follows right afterwards.
 Lua's table **operator** feature is supported.
 If the first entry of the class template is a table,
-which is used for the object's *meta-table*.
+it is used for the object's *meta-table*.
 Operators are defined in this *meta-table*.
 Derived class can have differnt operators from the parrent class.
 
@@ -244,6 +261,7 @@ base = class {
     value = 0;
     method = function (o, v) o.value = v or o.value end;
 }
+
 v = base()
 
 v.method = 1        --> bad practice, but legal
@@ -278,7 +296,13 @@ v.friend = nil
 print(v.friend)         --> false
 w = newClass()
 print(w.friend.value)   --> 0
+
+x = v                   -- same object
+y = w()                 -- fast duplicate
 ```
+
+Since object is essentially a table, object assignment will make new variable point to the same object.
+Using object's \_\_call method will fast copy the object.
 
 **Example: More on Polymorphism**
 

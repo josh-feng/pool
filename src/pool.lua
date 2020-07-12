@@ -1,8 +1,8 @@
 #!/usr/bin/env lua
 -- ====================================================================== --
 -- POOL (Poorman's object-oriented lua)    MIT License (c) 2019 Josh Feng --
-local pairs, error, tostring, type, getmetatable, setmetatable, rawset =
-      pairs, error, tostring, type, getmetatable, setmetatable, rawset -- for efficiency
+local pairs, error, tostring, type, getmetatable, setmetatable, rawset, next =
+      pairs, error, tostring, type, getmetatable, setmetatable, rawset, next
 
 local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     local targ = {}
@@ -64,7 +64,8 @@ local function __class (tmpl, creator) -- class {{{ -- creator is the parent
     if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
     if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
 
-    local omt = {}
+    local omt = {} -- fast copy
+    omt.__call = function (o) return cloneTbl(o, omt) end -- fast copy
     if creator then -- baseClass
         for k, v in pairs(creator) do omt[k] = v end -- inherite operators
     else
@@ -96,7 +97,7 @@ local function __class (tmpl, creator) -- class {{{ -- creator is the parent
     end
     if not next(omt[2]) then omt[2] = nil end
 
-    creator = function (...) -- classes {{{ tmpl is the hidden class template
+    creator = function (...) -- {{{ class/object-creator
         local o = {}
         setmetatable(o, omt) -- need member functions
         polymorphism(o, omt, ...)

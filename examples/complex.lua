@@ -1,5 +1,6 @@
 #!/usr/bin/env lua
--- Complex number math
+-- Complex number mathematics
+-- ref: R.V.Churchill, J.W. Brown, "Complex Variables and Applications", 4th ed., McGraw-Hill, 1984
 local class = require 'pool'
 
 local complex = class {
@@ -24,18 +25,18 @@ local complex = class {
 
         __div = function (o1, o2)
             if 'number' == type(o2) then return class:new(o1, o1.x / o2, o1.y / o2) end
-            local d = o2.x * o2.x + o2.y * o2.y
-            return class:new(o1, (o1.x * o2.x + o1.y * o2.y) / d, (o1.x * o2.y - o1.y * o2.x) / d)
+            local r = o2.x * o2.x + o2.y * o2.y
+            return class:new(o1, (o1.x * o2.x + o1.y * o2.y) / r, (o1.x * o2.y - o1.y * o2.x) / r)
         end;
 
-        __pow = function (o1, o2) -- ^ : o = o1^o2 = e^(o2 * log o1)
+        __pow = function (o1, o2) -- Pow ^ : o = o1^o2 = e^(o2 * log o1)
             local r, t = math.log(o1.x * o1.x + o1.y * o1.y) * 0.5, math.atan(o1.y, o1.x)
             if 'number' == type(o2) then r, t = math.exp(o2 * r), o2 * t
             else r, t = math.exp(o2.x * r - o2.y * t), o2.y * r + o2.x * t end
             return class:new(o1, r * math.cos(t), r * math.sin(t))
         end;
 
-        __concat = function (o1, o2) -- .. : o = log_o1 o2 i.e. o2 = o1^o = e^(o * log o1)
+        __band = function (o1, o2) -- Log & : o = log_o1 o2 i.e. o2 = o1^o = e^(o * log o1)
             local r, t = math.log(o1.x * o1.x + o1.y * o1.y) * 0.5, math.atan(o1.y, o1.x)
             if 'number' == type(o2) then
                 o2 = math.log(o2) / (r * r + t * t)
@@ -54,14 +55,14 @@ local complex = class {
 }
 
 -- global variable
-_I = complex(0, 1)
+I = complex(0, 1)
 
 -- demo
 -- local z = complex()
--- local z1 = z()           -- fast copy of z
+-- local z1 = z()                  -- fast copy of z
 -- local z2 = complex(1)
--- print(_I, z1, z2)        --> (0, 1) (0, 0) (1, 0)
--- print(complex(2, 0)..2)  --> (1, 0)
+-- print(I, z1 + z2)               --> (0, 1) (0, 0) (1, 0)
+-- print((complex(2, 0)&2) + I)    --> (1, 1)
 
 return complex
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

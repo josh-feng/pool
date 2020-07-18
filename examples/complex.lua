@@ -72,7 +72,7 @@ local complex = class {
 }
 
 -- global variable
-I = complex(0, 1)
+I = I or complex(0, 1)
 
 -- demo
 -- local z = complex()          --> (0, 0)
@@ -96,9 +96,10 @@ local _sqrt, _exp, _log, _sin, _cos, _tan, _asin, _acos, _atan =
     math.sqrt, math.exp, math.log, math.sin, math.cos, math.tan, math.asin, math.acos, math.atan
 
 math.sqrt = function (o)
+    if 'number' == type(o) and o < 0 then return complex(0, _sqrt(-o)) end
     if 'complex' == type(o) then
         local r, t = _sqrt(_sqrt(o.x * o.x + o.y * o.y)), _atan(o.y, o.x) * 0.5
-        return class:new(o, r * _cos(t), r * _sin(t))
+        return complex(r * _cos(t), r * _sin(t))
     end
     return _sqrt(o)
 end
@@ -106,19 +107,20 @@ end
 math.exp = function (o)
     if 'complex' == type(o) then
         local r = _exp(o.x)
-        return class:new(o, r * _cos(o.y), r * _sin(o.y))
+        return complex(r * _cos(o.y), r * _sin(o.y))
     end
     return _exp(o)
 end
 
 math.log = function (o)
-    return 'complex' == type(o) and class:new(o, _log(o.x * o.x + o.y * o.y) * 0.5, _atan(o.y, o.x)) or _log(o)
+    if 'number' == type(o) and o < 0 then o = complex(o) end
+    return 'complex' == type(o) and complex(_log(o.x * o.x + o.y * o.y) * 0.5, _atan(o.y, o.x)) or _log(o)
 end
 
 math.sin = function (o)
     if 'complex' == type(o) then
         local y = _exp(o.y)
-        return class:new(o, (y + 1 / y) * 0.5 * _sin(o.x), (y - 1 / y) * 0.5 * _cos(o.x))
+        return complex((y + 1 / y) * 0.5 * _sin(o.x), (y - 1 / y) * 0.5 * _cos(o.x))
     end
     return _sin(o)
 end
@@ -126,7 +128,7 @@ end
 math.cos = function (o)
     if 'complex' == type(o) then
         local y = _exp(o.y)
-        return class:new(o, (y + 1 / y) * 0.5 * _cos(o.x), (1 / y - y) * 0.5 * _sin(o.x))
+        return complex((y + 1 / y) * 0.5 * _cos(o.x), (1 / y - y) * 0.5 * _sin(o.x))
     end
     return _cos(o)
 end
@@ -136,27 +138,29 @@ math.tan = function (o)
         local y = _exp(o.y)
         local y2 = y * y
         local r = y2 + 1 / y2 + 2 * _cos(2 * o.x)
-        return class:new(o, 2 * _sin(2 * o.x) / r, (1 / y2 - y2) / r)
+        return complex(2 * _sin(2 * o.x) / r, (1 / y2 - y2) / r)
     end
     return _tan(o)
 end
 
 math.asin = function (o) -- -I log ( I z + (1 - z*z)^1/2 )
+    if 'number' == type(o) and o < -1 or 1 < o then o = complex(o) end
     if 'complex' == type(o) then
         local r, t = 1 - o.x * o.x + o.y * o.y, - 2 * o.x * o.y
         r, t = _sqrt(_sqrt(r * r + t * t)), _atan(t, r) * 0.5
         r, t = r * _cos(t) - o.y, r * _sin(t) + o.x
-        return class:new(o, _atan(t, r), - _log(r * r + t * t) * 0.5)
+        return complex(_atan(t, r), - _log(r * r + t * t) * 0.5)
     end
     return _asin(o)
 end
 
 math.acos = function (o) -- -I log ( z + I (1 - z*z)^1/2 )
+    if 'number' == type(o) and o < -1 or 1 < o then o = complex(o) end
     if 'complex' == type(o) then
         local r, t = 1 - o.x * o.x + o.y * o.y, - 2 * o.x * o.y
         r, t = _sqrt(_sqrt(r * r + t * t)), _atan(t, r) * 0.5
         r, t = o.x - r * _sin(t), r * _cos(t) + o.y
-        return class:new(o, _atan(t, r), - _log(r * r + t * t) * 0.5)
+        return complex(_atan(t, r), - _log(r * r + t * t) * 0.5)
     end
     return _acos(o)
 end
@@ -165,7 +169,7 @@ math.atan = function (o1, o2) -- 0.5 * I log ((I + z) / (I - z))
     if 'complex' == type(o1) then
         local r1, t1 = 1 + o1.x * o1.x + o1.y * o1.y + 2 * o1.y, _atan(1 + o1.y,  o1.x)
         local r2, t2 = 1 + o1.x * o1.x + o1.y * o1.y - 2 * o1.y, _atan(1 - o1.y, -o1.x)
-        return class:new(o1, (t2 - t1) * 0.5, (_log(r1 * r1 + t1 * t1) - _log(r2 * r2 + t2 * t2)) * 0.25)
+        return complex( (t2 - t1) * 0.5, (_log(r1 * r1 + t1 * t1) - _log(r2 * r2 + t2 * t2)) * 0.25)
     end
     return _atan(o1, o2)
 end
@@ -173,7 +177,9 @@ end
 -- demo
 -- print(math.log(I))
 -- print(math.sqrt(I))
+-- print(math.sqrt(-1) == I)
 -- print(math.atan(I))
+-- print(math.asin(2))
 
 return complex
 -- vim: ts=4 sw=4 sts=4 et foldenable fdm=marker fmr={{{,}}} fdl=1

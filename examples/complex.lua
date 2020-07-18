@@ -81,7 +81,7 @@ I = I or complex(0, 1)
 -- print(I, z1, z2)             --> (0, 1) (0, 0) (1, 2)
 -- print((complex(2)&2) + I)    --> (1, 1)
 -- print((2&complex(2)) + I)    --> (1, 1)
--- print(#I)
+-- print(#I)                    -- euler form
 -- print(complex(0) == 0)       --> false (must be the same type)
 -- print(1 + I * I)
 
@@ -92,8 +92,8 @@ type = function (o) return (getmetatable(o) and getmetatable(o)[1] == complex) a
 
 -- ====================================================================== --
 -- extend math table function
-local _sqrt, _exp, _log, _sin, _cos, _tan, _asin, _acos, _atan =
-    math.sqrt, math.exp, math.log, math.sin, math.cos, math.tan, math.asin, math.acos, math.atan
+local _sqrt, _exp, _log, _sin, _cos, _tan, _asin, _acos, _atan, _abs =
+    math.sqrt, math.exp, math.log, math.sin, math.cos, math.tan, math.asin, math.acos, math.atan, math.abs
 
 math.sqrt = function (o)
     if 'number' == type(o) and o < 0 then return complex(0, _sqrt(-o)) end
@@ -174,11 +174,16 @@ math.atan = function (o1, o2) -- 0.5 * I log ((I + z) / (I - z))
     return _atan(o1, o2)
 end
 
+math.abs = function (o)
+    return 'complex' == type(o) and _sqrt(o.x * o.x + o.y * o.y) or _abs(o)
+end
+
 -- demo
 -- print(math.log(I))
 -- print(math.sqrt(I))
 -- print(math.sqrt(-1) == I)
 -- print(math.atan(I))
+print(math.abs(I))
 -- print(math.asin(2))
 
 return complex

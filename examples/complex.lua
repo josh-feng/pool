@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 -- ====================================================================== --
 -- POOL (Poorman's object-oriented lua)    MIT License (c) 2019 Josh Feng --
--- Complex number mathematics module
+-- complex number mathematics module
 -- ref: R.V.Churchill, J.W. Brown, "Complex Variables and Applications", 4th ed., McGraw-Hill, 1984
 local class = require 'pool'
 
@@ -183,7 +183,7 @@ end
 -- print(math.sqrt(I))
 -- print(math.sqrt(-1) == I)
 -- print(math.atan(I))
-print(math.abs(I))
+-- print(math.abs(I))
 -- print(math.asin(2))
 
 return complex

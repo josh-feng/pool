@@ -5,8 +5,10 @@
 -- ref: R.V.Churchill, J.W. Brown, "Complex Variables and Applications", 4th ed., McGraw-Hill, 1984
 local class = require 'pool'
 
-local _type, _log, _exp, _sin, _cos, _atan =
-    type, math.log, math.exp, math.sin, math.cos, math.atan
+local _type, _log, _exp, _sin, _cos, _atan, _sqrt =
+    type, math.log, math.exp, math.sin, math.cos, math.atan, math.sqrt
+
+local _tan, _asin, _acos, _abs = math.tan, math.asin, math.acos, math.abs
 
 local complex = class {
     x = 0; -- real part
@@ -18,39 +20,41 @@ local complex = class {
         __add = function (o1, o2)
             if _type(o1) == 'number' then o1, o2 = o2, o1 end
             return 'number' == _type(o2)
-            and class:new(o1, o1.x + o2, o1.y) or class:new(o1, o1.x + o2.x, o1.y + o2.y)
+                and class:new(o1, o1.x + o2, o1.y) or class:new(o1, o1.x + o2.x, o1.y + o2.y)
         end;
 
         __sub = function (o1, o2)
-            if _type(o1) == 'number' then o1, o2 = o2, o1 end
-            return 'number' == _type(o2)
-            and class:new(o1, o1.x - o2, o1.y) or class:new(o1, o1.x - o2.x, o1.y - o2.y)
+            if _type(o1) == 'number' then return class:new(o2, o1 - o2.x, - o2.y) end
+            return _type(o2) == 'number'
+                and class:new(o1, o1.x - o2, o1.y)
+                or class:new(o1, o1.x - o2.x, o1.y - o2.y)
         end;
 
         __mul = function (o1, o2)
             if _type(o1) == 'number' then o1, o2 = o2, o1 end
             return 'number' == _type(o2)
-            and class:new(o1, o1.x * o2, o1.y * o2)
-            or class:new(o1, o1.x * o2.x - o1.y * o2.y, o1.x * o2.y + o1.y * o2.x)
+                and class:new(o1, o1.x * o2, o1.y * o2)
+                or class:new(o1, o1.x * o2.x - o1.y * o2.y, o2.x * o1.y + o2.y * o1.x)
         end;
 
         __div = function (o1, o2)
-            if _type(o1) == 'number' then o1, o2 = o2, o1 end
             if 'number' == _type(o2) then return class:new(o1, o1.x / o2, o1.y / o2) end
             local r = o2.x * o2.x + o2.y * o2.y
-            return class:new(o1, (o1.x * o2.x + o1.y * o2.y) / r, (o1.x * o2.y - o1.y * o2.x) / r)
+            return _type(o1) == 'number'
+                and class:new(o2, o1 * o2.x / r, - o1 * o2.y / r)
+                or class:new(o1, (o1.x * o2.x + o1.y * o2.y) / r, (o2.x * o1.y - o2.y * o1.x) / r)
         end;
 
         __pow = function (o1, o2) -- Pow ^ : o = o1^o2 = e^(o2 * log o1)
-            if _type(o1) == 'number' then o1, o2 = o2, o1 end
+            if _type(o1) == 'number' then o1 = class:new(o2, o1) end
             local r, t = _log(o1.x * o1.x + o1.y * o1.y) * 0.5, _atan(o1.y, o1.x)
             if 'number' == _type(o2) then r, t = _exp(o2 * r), o2 * t
-            else r, t = _exp(o2.x * r - o2.y * t), o2.y * r + o2.x * t end
+            else r, t = _exp(o2.x * r - o2.y * t), o2.x * t + o2.y * r end
             return class:new(o1, r * _cos(t), r * _sin(t))
         end;
 
         __band = function (o1, o2) -- Log & : o = log_o1 o2 i.e. o2 = o1^o = e^(o * log o1)
-            if _type(o1) == 'number' then o1, o2 = o2, o1 end
+            if _type(o1) == 'number' then o1 = class:new(o2, o1) end
             local r, t = _log(o1.x * o1.x + o1.y * o1.y) * 0.5, _atan(o1.y, o1.x)
             if 'number' == _type(o2) then
                 o2 = _log(o2) / (r * r + t * t)
@@ -64,8 +68,8 @@ local complex = class {
 
         __unm = function (o) return class:new(o, - o.x, - o.y) end;
         __bnot = function (o) return class:new(o, o.x, - o.y) end; -- ~ (conjugate)
-        __len = function (o) -- the # operation -- euler form
-            return class:new(o, _log(o.x * o.x + o.y * o.y) * 0.5, _atan(o.y, o.x))
+        __len = function (o) -- the # operation -- polar form
+            return class:new(o, _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x))
         end;
         __tostring = function (o) return '('..o.x..', '..o.y..')' end;
     };
@@ -81,9 +85,10 @@ I = I or complex(0, 1)
 -- print(I, z1, z2)             --> (0, 1) (0, 0) (1, 2)
 -- print((complex(2)&2) + I)    --> (1, 1)
 -- print((2&complex(2)) + I)    --> (1, 1)
--- print(#I)                    -- euler form
+-- print(#I)                    -- polar form
 -- print(complex(0) == 0)       --> false (must be the same type)
 -- print(1 + I * I)
+-- print(I - 1, I - I, 1 - I, 1 / I, 1^I, 2&I )
 
 -- ====================================================================== --
 -- modify type
@@ -92,9 +97,6 @@ type = function (o) return (getmetatable(o) and getmetatable(o)[1] == complex) a
 
 -- ====================================================================== --
 -- extend math table function
-local _sqrt, _exp, _log, _sin, _cos, _tan, _asin, _acos, _atan, _abs =
-    math.sqrt, math.exp, math.log, math.sin, math.cos, math.tan, math.asin, math.acos, math.atan, math.abs
-
 math.sqrt = function (o)
     if 'number' == type(o) and o < 0 then return complex(0, _sqrt(-o)) end
     if 'complex' == type(o) then

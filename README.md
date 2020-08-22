@@ -191,7 +191,7 @@ v1.method = nil
 print(v1:method(3))         --> 9
 ```
 
-**Example: Inheritance/Polymorphism**
+**Example: Inheritance/Polymorphism and Operators**
 
 The parent class is supplied as the only argument for the keyword
 **class**, then the derived class template follows right afterwards.
@@ -336,7 +336,7 @@ v = nil         --> main object is gone
 
 ## Notice
 
-Lua is a script, not a strong type programming language.
+Lua is a scripting language, not a strong type programming language.
 If you are a hardcore object-oriented programer seeking
 the most advanced OOP features,
 then you would choose C++ or other languages.

@@ -4,7 +4,10 @@
 local pairs, error, tostring, type, getmetatable, setmetatable, rawset, next =
       pairs, error, tostring, type, getmetatable, setmetatable, rawset, next
 
-local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
+--- deep copy a string-key-ed table
+-- @parame src The source table
+-- @parame mt The metatable for the target table
+local function cloneTbl (src, mt) -- {{{
     local targ = {}
     for k, v in pairs(src) do
         if 'string' == type(k) then
@@ -15,18 +18,30 @@ local function cloneTbl (src, mt) -- {{{ deep copy the string-key-ed
     return targ
 end -- }}}
 
-local function setVar (t, k, v) -- forbid creating vars -- {{{
-    if t[k] == nil then error('Undefined in class:'..tostring(t), 2) end
+--- forbid creating vars after class template
+-- @param t The object (i.e. table)
+-- @param k The key
+-- @param v The value
+local function setVar (t, k, v) -- {{{
+    if t[k] == nil and type(k) ~= 'number' then error('Undefined ('..k..') in class:'..tostring(t), 2) end
     rawset(t, k, v)
 end -- }}}
-local function annihilator (o, ...) -- {{{ destructor for objects
+
+--- destructor for the object
+-- Note that the object is not collected by gc immediately
+-- @param o The object
+local function annihilator (o, ...) -- {{{
     local mt = getmetatable(o)
     while mt do
         if mt['>'] then mt['>'](o) end -- rawget is not necessary
         mt = getmetatable(mt.__index)
     end
-end -- }}} NB: not collected by gc immediately
-local function polymorphism (o, mt, ...) -- {{{ constructor for objects
+end -- }}}
+
+--- constructor for the object
+-- @param o The object
+-- @param mt The metatable of the object
+local function polymorphism (o, mt, ...) -- {{{
     local mtt = mt.__index -- metatable template
     if mtt then
         if mt[2] then -- default table values
@@ -43,28 +58,36 @@ end -- }}}
 local class = {
     id = ''; -- version control
     list = {}; -- class record
-    copy = function (c, o) -- duplicate object o
+    copy = function (c, o) -- duplicate the object o
         return cloneTbl(o, getmetatable(o) or error('bad object', 2))
     end;
 }
 
-function class:new (o, ...) -- {{{ duplicate the object
+--- create a new object of the class
+-- @param o An object that associates the class
+function class:new (o, ...) -- {{{
     o = (getmetatable(o) or error('bad object', 2))[1] -- class (object creator)
     if not self.list[o] then error('bad object', 2) end
     return o(...)
 end -- }}}
-function class:parent (o) -- {{{ parent class
+
+--- find the parent class of a class (object)
+-- @param o An object or its class
+function class:parent (o) -- {{{
     o = (type(o) == 'table' and getmetatable(o) or self.list[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
     return o and o[1] -- parent class (object creator)
 end -- }}}
 
-local function __class (tmpl, creator) -- class {{{ -- creator is the parent
+--- declare the class based on the template
+-- @param tmpl The class template
+-- @param creator The parent class
+local function __class (tmpl, creator) -- {{{
     if 'table' ~= type(tmpl) then error('Class declaration:'..tostring(t), 2) end
     if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
     if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
 
-    local omt = {} -- fast copy
+    local omt = {} -- object's metatable
     omt.__call = function (o) return cloneTbl(o, omt) end -- fast copy
     if creator then -- baseClass
         for k, v in pairs(creator) do omt[k] = v end -- inherite operators

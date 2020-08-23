@@ -71,7 +71,9 @@ local complex = class {
         __len = function (o) -- the # operation -- polar form
             return class:new(o, _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x))
         end;
-        __tostring = function (o) return '('..o.x..', '..o.y..')' end;
+        __tostring = function (o)
+            return o.y == 0 and tostring(o.x) or '('..o.x..', '..o.y..')'
+        end;
     };
 }
 
@@ -171,7 +173,7 @@ math.atan = function (o1, o2) -- 0.5 * I log ((I + z) / (I - z))
     if 'complex' == type(o1) then
         local r1, t1 = 1 + o1.x * o1.x + o1.y * o1.y + 2 * o1.y, _atan(1 + o1.y,  o1.x)
         local r2, t2 = 1 + o1.x * o1.x + o1.y * o1.y - 2 * o1.y, _atan(1 - o1.y, -o1.x)
-        return complex( (t2 - t1) * 0.5, (_log(r1 * r1 + t1 * t1) - _log(r2 * r2 + t2 * t2)) * 0.25)
+        return complex((t2 - t1) * 0.5, (_log(r1 * r1 + t1 * t1) - _log(r2 * r2 + t2 * t2)) * 0.25)
     end
     return _atan(o1, o2)
 end

@@ -57,7 +57,7 @@ end -- }}}
 
 local class = {
     id = ''; -- version control
-    list = {}; -- class record
+    static = {}; -- class records
     copy = function (c, o) -- duplicate the object o
         return cloneTbl(o, getmetatable(o) or error('bad object', 2))
     end;
@@ -67,14 +67,14 @@ local class = {
 -- @param o An object that associates the class
 function class:new (o, ...) -- {{{
     o = (getmetatable(o) or error('bad object', 2))[1] -- class (object creator)
-    if not self.list[o] then error('bad object', 2) end
+    if not self.static[o] then error('bad object', 2) end
     return o(...)
 end -- }}}
 
 --- find the parent class of a class (object)
 -- @param o An object or its class
 function class:parent (o) -- {{{
-    o = (type(o) == 'table' and getmetatable(o) or self.list[o]) or error('bad object/class', 2)
+    o = (type(o) == 'table' and getmetatable(o) or self.static[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
     return o and o[1] -- parent class (object creator)
 end -- }}}
@@ -126,7 +126,7 @@ local function __class (tmpl, creator) -- {{{
         polymorphism(o, omt, ...)
         return o -- the object
     end -- }}}
-    class.list[creator] = omt
+    class.static[creator] = omt
     omt[1] = creator
     return creator
 end; -- }}}
@@ -134,7 +134,7 @@ end; -- }}}
 setmetatable(class, {
     __metatable = true;
     __call = function (c, cls) -- wrap the inheritance
-        return c.list[cls] and function (tpl) return __class(tpl, c.list[cls]) end or __class(cls)
+        return c.static[cls] and function (tpl) return __class(tpl, c.static[cls]) end or __class(cls)
     end;
 })
 

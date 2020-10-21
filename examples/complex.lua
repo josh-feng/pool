@@ -90,6 +90,7 @@ I = I or complex(0, 1)
 -- print(#I)                    -- polar form
 -- print(complex(0) == 0)       --> false (must be the same type)
 -- print(1 + I * I)
+-- print(1 ~= I * I)
 -- print(I - 1, I - I, 1 - I, 1 / I, 1^I, 2&I )
 
 -- ====================================================================== --

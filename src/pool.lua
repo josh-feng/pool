@@ -120,6 +120,9 @@ local function __class (tmpl, creator) -- {{{
     end
     if not next(omt[2]) then omt[2] = nil end
 
+    tmpl = 'class_'..string.match(tostring(omt), '%S*$') -- class identity
+    omt.__tostring = omt.__tostring or function (o) return tmpl end
+
     creator = function (...) -- {{{ class/object-creator
         local o = {}
         setmetatable(o, omt) -- need member functions

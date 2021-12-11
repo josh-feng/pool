@@ -68,8 +68,13 @@ local complex = class {
 
         __unm = function (o) return class:new(o, - o.x, - o.y) end;
         __bnot = function (o) return class:new(o, o.x, - o.y) end; -- ~ (conjugate)
-        __len = function (o) -- the # operation -- polar form
-            return class:new(o, _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x))
+        __len = function (o) -- the # operation -- polar form (euler) not comlex
+            return _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x)
+        end;
+        __call = function (o, mode) -- ()fast-copy/(0)log-branch/(false)exp
+            return mode == nil and class:new(o) or
+                (mode and class:new(o, _log(o.x * o.x + o.y * o.y) * 0.5, _atan(o.y, o.x))
+                       or class:new(o, _exp(o.x) * _cos(o.y), _exp(o.x) * _sin(o.y)))
         end;
         __tostring = function (o)
             return o.y == 0 and tostring(o.x) or '('..o.x..', '..o.y..')'

@@ -362,5 +362,29 @@ alias = function (o) print('version 2') end
 o:method()      --> version 2
 ```
 
+
+The `class.static` table provides a mechanism to access class templates.
+Extending/Modifying classes is still possible after they are defined:
+
+```lua
+class = require('pool')
+
+myClass = class {}  -- dummy declaration
+
+myClassTmpl = class.static[myClass].__index
+
+o = myClass()
+
+print(o.field)      --> nil
+
+myClassTmpl.field = 1
+myClassTmpl.func1 = function (o) print(o.field) end
+
+print(o.field)      --> 1
+o:func1()           --> 1
+```
+
+
+
 Please check out many applications in the 'examples' folder, and the files in 'doc' folder, too.
 

@@ -363,7 +363,7 @@ o:method()      --> version 2
 ```
 
 
-The `class.static` table provides a mechanism to access class templates.
+The `class` table provides a mechanism to access class templates.
 Extending/Modifying classes is still possible after they are defined:
 
 ```lua
@@ -371,7 +371,7 @@ class = require('pool')
 
 myClass = class {}  -- dummy declaration
 
-myClassTmpl = class.static[myClass].__index
+myClassTmpl = class[myClass].__index
 
 o = myClass()
 
@@ -384,6 +384,7 @@ print(o.field)      --> 1
 o:func1()           --> 1
 ```
 
+The `tostring` function will return object's class table hash number.
 
 
 Please check out many applications in the 'examples' folder, and the files in 'doc' folder, too.

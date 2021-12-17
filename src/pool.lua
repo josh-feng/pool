@@ -8,11 +8,11 @@ local strmatch = string.match
 --- deep copy a string-key-ed table
 -- @parame src The source table
 -- @parame mt The metatable for the target table
-local function cloneTbl (src, mt) -- {{{
+local function dupTbl (src, mt) -- {{{
     local targ = {}
     for k, v in pairs(src) do
         if 'string' == type(k) then
-            targ[k] = type(v) == 'table' and cloneTbl(v, getmetatable(v)) or v
+            targ[k] = type(v) == 'table' and dupTbl(v, getmetatable(v)) or v
         end
     end
     if mt then setmetatable(targ, mt) end -- No trace of src, since object is flat
@@ -47,7 +47,7 @@ local function polymorphism (o, mt, ...) -- {{{
     if mtt then
         if mt[2] then -- default table values
             for _, v in pairs(mt[2]) do
-                if not o[_] then o[_] = cloneTbl(v, getmetatable(v)) end
+                if not o[_] then o[_] = dupTbl(v, getmetatable(v)) end
             end
         end
         mtt = getmetatable(mtt)
@@ -58,7 +58,7 @@ end -- }}}
 
 local class = { -- class records
     copy = function (c, o) -- duplicate the object o
-        return cloneTbl(o, getmetatable(o) or error('bad object', 2))
+        return dupTbl(o, getmetatable(o) or error('bad object', 2))
     end;
 }
 
@@ -87,7 +87,7 @@ local function __class (tmpl, creator) -- {{{
     if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
 
     local omt = {} -- object's metatable
-    omt.__call = function (o) return cloneTbl(o, omt) end -- fast copy
+    omt.__call = function (o) return dupTbl(o, omt) end -- fast copy
     if creator then -- baseClass
         for k, v in pairs(creator) do omt[k] = v end -- inherite operators
     else
@@ -99,7 +99,7 @@ local function __class (tmpl, creator) -- {{{
             if type(k) == 'string' then omt[k] = v end
         end
     end
-    tmpl = cloneTbl(tmpl) -- class template closure
+    tmpl = dupTbl(tmpl) -- class template closure
 
     -- polymorphism & remove their access from object
     omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil

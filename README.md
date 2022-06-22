@@ -22,22 +22,23 @@ myBaseClass = class {
     ['<'] = function (o, v) o.field ... end; -- constructor
     ['>'] = function (o) ... end;            -- destructor
 
-    { -- lua table operators : optional
+    ['^'] = { -- lua table operators : optional
         __add = function (o, ...) ... end;
         ...
     };
 }
 
-o1, o2 = myBaseClass(1)     -- create an object (table-based)
+-- create an object (table-based)
+o1, o2 = myBaseClass(1), myBaseClass(2)
 o1.field = o1:func1(...)
 
 print(o1 + o2)              -- table-structure operators
 ```
 
-- class variables are public, and addressed with **'.'**
-- class memeber functions are public, and called with **':'**
-- constructor **['<']** is optional, and called when creating a new object
-- destructor **['>']** is optional, and called by lua's garbage collector
+- class variables are public, and addressed with **`.`**
+- class memeber functions are public, and called with **`:`**
+- constructor **`['<']`** is optional, and called when creating a new object
+- destructor **`['>']`** is optional, and called by lua's garbage collector
 
 **Example: Initialization**
 
@@ -122,7 +123,7 @@ The 'field' member in the above example points to separate tables for object 'v1
 Using the *metatable* mechanism,
 we light-copy every table value in the class template for each object in initialization.
 This is useful in most applications.
-Making a member entry of a class poiting to a specific table can be done in the constructor.
+Making a member entry of a class pointing to a specific table can be done in the constructor.
 
 
 **Example: Constructor/Destructor**
@@ -196,8 +197,7 @@ print(v1:method(3))         --> 9
 The parent class is supplied as the only argument for the keyword
 **class**, then the derived class template follows right afterwards.
 Lua's table **operator** feature is supported.
-If the first entry of the class template is a table,
-it is used for the object's *meta-table*.
+The entry **`['^']`** is used for the object's *meta-table*.
 Operators are defined in this *meta-table*.
 Derived class can have differnt operators from the parrent class.
 
@@ -209,7 +209,7 @@ base = class {
 
     ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
 
-    { -- metatable: operator
+    ['^'] = { -- metatable: operator
         __add = function (o1, o2)
             local o = class:new(o1)
             o.value = o1.value - o2.value
@@ -223,7 +223,7 @@ test = class (base) { -- 'base' is the parent class
 
     ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
 
-    { -- metatable:
+    ['^'] = { -- metatable:
         __add = function (o1, o2) return o1.value + o2.value end; -- override
     };
 }
@@ -363,7 +363,8 @@ o:method()      --> version 2
 ```
 
 
-The `class` table provides a mechanism to access class templates.
+The `class` table provides a mechanism to access class templates
+(i.e. object's meta-table).
 Extending/Modifying classes is still possible after they are defined:
 
 ```lua

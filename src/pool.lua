@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- ====================================================================== --
--- POOL (Poorman's object-oriented lua)    MIT License (c) 2019 Josh Feng --
+-- POOL (Poorman's object-oriented lua)    MIT License (c) 2022 Josh Feng --
 local pairs, error, tostring, type, getmetatable, setmetatable, rawset, next =
       pairs, error, tostring, type, getmetatable, setmetatable, rawset, next
 local strmatch = string.match
@@ -94,8 +94,8 @@ local function __class (tmpl, creator) -- {{{
         omt.__newindex = setVar -- forbid new field addition
         omt.__gc = annihilator
     end
-    if type(tmpl[1]) == 'table' then
-        for k, v in pairs(tmpl[1]) do -- newly defined operators
+    if type(tmpl['^'] or tmpl[1]) == 'table' then
+        for k, v in pairs(tmpl['^'] or tmpl[1]) do -- newly defined operators
             if type(k) == 'string' then omt[k] = v end
         end
     end

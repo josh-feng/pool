@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- algebraic topology module
+-- algebraic topology module (under construcion)
 -- ref:
 --      May, ""
 --      Harper, Greenberg ""

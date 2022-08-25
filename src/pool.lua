@@ -85,6 +85,7 @@ local function __class (tmpl, creator) -- {{{
     if 'table' ~= type(tmpl) then error('Class declaration:'..tostring(t), 2) end
     if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
     if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
+    if tmpl['^'] and type(tmpl['^']) ~= 'table' then error(' bad operators', 2) end
 
     local omt = {} -- object's metatable
     omt.__call = function (o) return dupTbl(o, omt) end -- fast copy
@@ -94,12 +95,16 @@ local function __class (tmpl, creator) -- {{{
         omt.__newindex = setVar -- forbid new field addition
         omt.__gc = annihilator
     end
-    if type(tmpl['^'] or tmpl[1]) == 'table' then
-        for k, v in pairs(tmpl['^'] or tmpl[1]) do -- newly defined operators
+    if tmpl['^'] then
+        for k, v in pairs(tmpl['^']) do -- newly defined operators
             if type(k) == 'string' then omt[k] = v end
         end
+        omt[1], tmpl['^'] = tmpl['^'], nil
+        omt[1], tmpl['^'] = dupTbl(tmpl), omt[1]
+        tmpl = omt[1] -- class template closure
+    else
+        tmpl = dupTbl(tmpl) -- class template closure
     end
-    tmpl = dupTbl(tmpl) -- class template closure
 
     -- polymorphism & remove their access from object
     omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil

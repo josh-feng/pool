@@ -101,7 +101,7 @@ local space = class { -- cell/complex
     end;
 
 
-    { -- algebra
+    ['^'] = { -- algebra
         __add = function(o1, o2) -- +
         end;
 

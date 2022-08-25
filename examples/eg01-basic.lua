@@ -12,7 +12,7 @@ local base = class {
 
     ['<'] = function (o, v) o.value = v or o.value end; -- o is the object
 
-    { -- metatable: operator
+    ['^'] = { -- metatable: operator
         __add = function (o1, o2)
             local o = class:new(o1)
             o.value = o1.value - o2.value
@@ -26,7 +26,7 @@ local test = class (base) { -- inherit class 'base'
 
     ['<'] = function (o, v) o.extra = (v or -1) + o.value end; -- overridden
 
-    { -- metatable:
+    ['^'] = { -- metatable:
         __add = function (o1, o2) return o1.value + o2.value end; -- override
     };
 }

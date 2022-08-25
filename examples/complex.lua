@@ -16,7 +16,7 @@ local complex = class {
 
     ['<'] = function (o, x, y) o.x, o.y = x, y end;
 
-    { -- support o1 or o2 regular number
+    ['^'] = { -- support o1 or o2 regular number
         __add = function (o1, o2)
             if _type(o1) == 'number' then o1, o2 = o2, o1 end
             return 'number' == _type(o2)

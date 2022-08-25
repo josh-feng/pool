@@ -22,7 +22,7 @@ myBaseClass = class {
     ['<'] = function (o, v) o.field ... end; -- constructor
     ['>'] = function (o) ... end;            -- destructor
 
-    ['^'] = { -- lua table operators : optional
+    ['^'] = { -- object operators: based on lua meta-method features
         __add = function (o, ...) ... end;
         ...
     };

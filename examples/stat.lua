@@ -85,7 +85,7 @@ local sample = class { -- {{{ pseudo random variable
             for i = 1, (#o1 + #o2 - 1) do
                 local v = 0
                 for j = 1, #o2 do -- TODO
-                    if i >= j then v = v + o1[i - j + 1] * o2[j] else break end
+                    if i >= j then v = v + (o1[i - j + 1] or 0) * (o2[j] or 0) else break end
                 end
                 o[i] = v
             end
@@ -211,13 +211,15 @@ print(c:mnt(2))
 print(c:range())
 a = stat(2)
 b = stat(2)
-a[1], a[2] = 1, 1
+a[1], a[2] = 2, 2
 b[1], b[2] = 1, 1
--- c = a & b
--- print(c[1], c[2], c[3])
+c = a & b
+print(c[1], c[2], c[3])
+print(a | b)
 
 
 for k, v in pairs(stat.api) do print(k, v) end
+-- for k, v in pairs(a) do print(k, v) end
 
 return stat
 -- ==================================================================== --

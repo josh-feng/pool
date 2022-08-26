@@ -39,6 +39,7 @@ print(o1 + o2)              -- table-structure operators
 - class memeber functions are public, and called with **`:`**
 - constructor **`['<']`** is optional, and called when creating a new object
 - destructor **`['>']`** is optional, and called by lua's garbage collector
+- operator table **`['^']`** is optional, based on lua's meta-methods. 
 
 **Example: Initialization**
 

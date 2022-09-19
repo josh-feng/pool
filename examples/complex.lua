@@ -68,8 +68,8 @@ local complex = class {
 
         __unm = function (o) return class:new(o, - o.x, - o.y) end;
         __bnot = function (o) return class:new(o, o.x, - o.y) end; -- ~ (conjugate)
-        __len = function (o) -- the # operation -- polar form (euler) not comlex
-            return _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x)
+        __len = function (o) -- the # operation -- magnitude
+            return _sqrt(o.x * o.x + o.y * o.y)
         end;
         __call = function (o, mode) -- ()fast-copy/(0)log-branch/(false)exp
             return mode == nil and class:new(o) or
@@ -92,7 +92,7 @@ I = I or complex(0, 1)
 -- print(I, z1, z2)             --> (0, 1) (0, 0) (1, 2)
 -- print((complex(2)&2) + I)    --> (1, 1)
 -- print((2&complex(2)) + I)    --> (1, 1)
--- print(#I)                    -- polar form
+-- print(#I)                    -- magnitude
 -- print(complex(0) == 0)       --> false (must be the same type)
 -- print(1 + I * I)
 -- print(1 ~= I * I)

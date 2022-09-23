@@ -95,15 +95,13 @@ local function __class (tmpl, creator) -- {{{
         omt.__newindex = setVar -- forbid new field addition
         omt.__gc = annihilator
     end
-    if tmpl['^'] then
+    tmpl = dupTbl(tmpl) -- class template closure
+    if tmpl['^'] then -- update object meta-methods
         for k, v in pairs(tmpl['^']) do -- newly defined operators
             if type(k) == 'string' then omt[k] = v end
+            tmpl['^'][k] = nil
         end
-        omt[1], tmpl['^'] = tmpl['^'], nil
-        omt[1], tmpl['^'] = dupTbl(tmpl), omt[1]
-        tmpl = omt[1] -- class template closure
-    else
-        tmpl = dupTbl(tmpl) -- class template closure
+        tmpl['^'] = nil
     end
 
     -- polymorphism & remove their access from object
@@ -139,7 +137,7 @@ local function __class (tmpl, creator) -- {{{
 end; -- }}}
 
 setmetatable(class, {
-    __metatable = true;
+    __metatable = "$Id:$";
     __call = function (c, cls) -- wrap the inheritance
         return type(cls) == 'function' and function (tpl) return __class(tpl, c[cls]) end or __class(cls)
     end;

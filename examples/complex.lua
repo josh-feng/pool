@@ -72,7 +72,7 @@ local complex = class {
             return class:new(o, _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x))
         end;
         __call = function (o, mode) -- ()fast-copy/(0)log-branch/(false)exp
-            return mode == nil and class:new(o) or
+            return mode == nil and class:copy(o) or
                 (mode and class:new(o, _log(o.x * o.x + o.y * o.y) * 0.5, _atan(o.y, o.x))
                        or class:new(o, _exp(o.x) * _cos(o.y), _exp(o.x) * _sin(o.y)))
         end;
@@ -87,12 +87,12 @@ I = I or complex(0, 1)
 
 -- demo
 -- local z = complex()          --> (0, 0)
--- local z1 = z()               -- fast copy of z
+-- local z1 = z()               --> fast copy of z
 -- local z2 = complex(1, 2)     --> (1, 2)
 -- print(I, z1, z2)             --> (0, 1) (0, 0) (1, 2)
 -- print((complex(2)&2) + I)    --> (1, 1)
 -- print((2&complex(2)) + I)    --> (1, 1)
--- print(#I)                    -- magnitude
+-- print(#I)                    --> polar form
 -- print(complex(0) == 0)       --> false (must be the same type)
 -- print(1 + I * I)
 -- print(1 ~= I * I)

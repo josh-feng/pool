@@ -14,6 +14,7 @@ local mfloor, msqrt = math.floor, math.sqrt
 
 local sample = class { -- {{{ pseudo random variable
     dims = false; -- data dimenstion of sample space
+    mode = false;
 
     ['<'] = function (o, ...) -- standard distribution {{{
         o.dims = table.pack(...)
@@ -36,7 +37,7 @@ local sample = class { -- {{{ pseudo random variable
         end
     end; -- }}}
 
-    ['^'] = { -- operators (cycle rule)
+    ['^'] = { -- operators (cycle rule) {{{
         __add = function (o1, o2)
             local n1, n2 = #o1, #o2
             local o = class:new(o1)
@@ -102,7 +103,13 @@ local sample = class { -- {{{ pseudo random variable
         -- __pow = function (o1, o2) end; -- power ^ : norm?
         -- __mod = function (o1, o2) end; -- modulo % : regression?
         -- __idiv = function (o1, o2) end; -- floor division // : norm?
-        -- __unm = function (o1, o2) end; -- negation -
+
+        __unm = function (o) -- negation -
+            local o1 = class:new(o)
+            for i = 1, #o do o1[i] = - o[i] end
+            return o1
+        end;
+
         -- __bnot   = function (o1, o2) end; -- bitwise not ~ : transpose?
         -- __bxor   = function (o1, o2) end; -- bitwise exclusive OR ~
         -- __shl    = function (o1, o2) end; -- bitwise shift left <<
@@ -116,7 +123,7 @@ local sample = class { -- {{{ pseudo random variable
         __tostring = function (o) -- TODO dims/average/std.dev
             return o.dims and tconcat(o.dims, ':') or ''
         end;
-    };
+    }; -- }}}
 
     -- member functions / statistics (sample)
     dup = function (o) -- duplicate {{{
@@ -132,7 +139,7 @@ local sample = class { -- {{{ pseudo random variable
         return f1, f2
     end; --}}}
 
-    sort = table.sort;
+    sort = table.sort; -- TODO
 
     range = function (o, tile) -- min / median / max {{{
         tile = tonumber(tile) or 0
@@ -177,7 +184,7 @@ local stat = {
 }
 
 setmetatable(stat, {
-    __metatable = "MIT license";
+    __metatable = "$Id:$".." MIT license";
     __call = function (c, ...) return sample(...) end;
 })
 

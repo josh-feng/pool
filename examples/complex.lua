@@ -68,8 +68,8 @@ local complex = class {
 
         __unm = function (o) return class:new(o, - o.x, - o.y) end;
         __bnot = function (o) return class:new(o, o.x, - o.y) end; -- ~ (conjugate)
-        __len = function (o) -- the # operation -- magnitude
-            return _sqrt(o.x * o.x + o.y * o.y)
+        __len = function (o) -- the polar transform
+            return class:new(o, _sqrt(o.x * o.x + o.y * o.y), _atan(o.y, o.x))
         end;
         __call = function (o, mode) -- ()fast-copy/(0)log-branch/(false)exp
             return mode == nil and class:new(o) or

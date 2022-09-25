@@ -1,6 +1,12 @@
 #!/usr/bin/env lua
 -- ====================================================================== --
 -- POOL (Poorman's object-oriented lua)    MIT License (c) 2022 Josh Feng --
+-- design:
+-- tmpl --> __index = {
+--  [0] = entries with table value
+--  [1] = creator
+--  [2] = class name
+-- }
 local pairs, error, tostring, type, getmetatable, setmetatable, rawset, next =
       pairs, error, tostring, type, getmetatable, setmetatable, rawset, next
 local strmatch = string.match
@@ -34,7 +40,7 @@ end -- }}}
 local function annihilator (o, ...) -- {{{
     local mt = getmetatable(o)
     while mt do
-        if mt['>'] then mt['>'](o) end -- rawget is not necessary
+        if mt['>'] then mt['>'](o, ...) end -- rawget is not necessary
         mt = getmetatable(mt.__index)
     end
 end -- }}}
@@ -45,8 +51,8 @@ end -- }}}
 local function polymorphism (o, mt, ...) -- {{{
     local mtt = mt.__index -- metatable template
     if mtt then
-        if mt[2] then -- default table values
-            for _, v in pairs(mt[2]) do
+        if mt[0] then -- default table values
+            for _, v in pairs(mt[0]) do
                 if not o[_] then o[_] = dupTbl(v, getmetatable(v)) end
             end
         end
@@ -90,11 +96,15 @@ local function __class (tmpl, creator) -- {{{
     local omt = {} -- object's metatable
     omt.__call = function (o) return dupTbl(o, omt) end -- fast copy
     if creator then -- baseClass
-        for k, v in pairs(creator) do omt[k] = v end -- inherite operators
+        for k, v in pairs(creator) do -- inherite operators
+            if type(k) == 'string' then omt[k] = v end
+        end
     else
         omt.__newindex = setVar -- forbid new field addition
         omt.__gc = annihilator
     end
+    omt[2] = 'class_'..strmatch(tostring(omt), '%S*$') -- class identity
+    omt.__tostring = function (o) return omt[2] end
     tmpl = dupTbl(tmpl) -- class template closure
     if tmpl['^'] then -- update object meta-methods
         for k, v in pairs(tmpl['^']) do -- newly defined operators
@@ -113,17 +123,14 @@ local function __class (tmpl, creator) -- {{{
     end
     omt.__index = tmpl
 
-    omt[2] = {} -- default table value and recovery
+    omt[0] = {} -- default table value and recovery
     for k, v in pairs(tmpl) do
         if type(v) == 'table' then
-            omt[2][k] = v
+            omt[0][k] = v
             tmpl[k] = false -- table-value when reset w/ nil
         end
     end
-    if not next(omt[2]) then omt[2] = nil end
-
-    tmpl = 'class_'..strmatch(tostring(omt), '%S*$') -- class identity
-    omt.__tostring = omt.__tostring or function (o) return tmpl end
+    if not next(omt[0]) then omt[0] = nil end
 
     creator = function (...) -- {{{ class/object-creator
         local o = {}

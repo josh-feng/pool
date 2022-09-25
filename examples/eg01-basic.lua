@@ -43,6 +43,5 @@ if -- failing conditions:
     or pcall(function () obj3['<'] = 1 end) -- object constructor
     or pcall(function () class(1) end) -- bad class declaration
 then error('Class QA failed.', 1) end
--- class.list = {}
-class.list[test] = nil
-class.list[base] = nil
+class[base] = nil
+class[test] = nil

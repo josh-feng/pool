@@ -107,9 +107,9 @@ local function __class (tmpl, creator) -- {{{
     -- polymorphism & remove their access from object
     omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil
     if creator then
-        creator.__gc = nil -- disable extra tmpl destructor
+        omt[1], creator.__gc =  creator.__gc, nil -- disable extra tmpl destructor
         setmetatable(tmpl, creator)
-        creator.__gc = annihilator -- recover
+        creator.__gc = omt[1] or annihilator -- recover
     end
     omt.__index = tmpl
 

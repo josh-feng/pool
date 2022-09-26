@@ -84,6 +84,8 @@ function class:parent (o) -- {{{
     return o and o[1] -- parent class (object creator)
 end -- }}}
 
+local function __tostring (o) return getmetatable(o)[2] end
+
 --- declare the class based on the template
 -- @param tmpl The class template
 -- @param creator The parent class
@@ -103,8 +105,6 @@ local function __class (tmpl, creator) -- {{{
         omt.__newindex = setVar -- forbid new field addition
         omt.__gc = annihilator
     end
-    omt[2] = 'class_'..strmatch(tostring(omt), '%S*$') -- class identity
-    omt.__tostring = function (o) return omt[2] end
     tmpl = dupTbl(tmpl) -- class template closure
     if tmpl['^'] then -- update object meta-methods
         for k, v in pairs(tmpl['^']) do -- newly defined operators
@@ -113,6 +113,10 @@ local function __class (tmpl, creator) -- {{{
         end
         tmpl['^'] = nil
     end
+    omt[2] = type(omt.__metatable) == 'string' and omt.__metatable
+        or 'class_'..strmatch(tostring(omt), '%S*$') -- class identity name
+    omt.__metatable = nil -- override the hostile setting
+    omt.__tostring = omt.__tostring or __tostring
 
     -- polymorphism & remove their access from object
     omt['<'], omt['>'], tmpl['<'], tmpl['>'] = tmpl['<'], tmpl['>'], nil, nil

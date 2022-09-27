@@ -2,13 +2,21 @@
 
 Lua itself provides rich features to implement some flavors of object-oriented programming
 in scripting level.
-This table-based OO module is implemented in a single file (**src/pool.lua**).
+This *table-based* OO module is implemented in a single file (**src/pool.lua**).
+
+# Requirement and Installation
+
+Lua version >= 5.1 is required to use this module. There are 2 ways to install the module:
+
+- Simply download and copy `src/pool.lua` to one of the `package.path`
+
+- Luarocks package is available in <https://luarocks.org/modules/josh-feng/pool>
+
+# Usage Paradigm
 
 The design is to use the module returned value as the *keyword* '**class**' for defining classes.
 On invoking this *keyword* with a table as the class template, an object creator function is returned.
 Objects are generated when calling object creators.
-
-## Usage paradigm
 
 ```lua
 class = require('pool')
@@ -17,14 +25,14 @@ class = require('pool')
 myBaseClass = class {
     field = false;
 
-    func1 = function (o, ...) o.field ... end;
+    func1 = function (o, ...) --[[o.field ...]] end;
 
-    ['<'] = function (o, v) o.field ... end; -- constructor
-    ['>'] = function (o) ... end;            -- destructor
+    ['<'] = function (o, v) --[[o.field ...]] end; -- constructor
+    ['>'] = function (o) --[[...]] end;            -- destructor
 
     ['^'] = { -- object operators: based on lua meta-method features
-        __add = function (o, ...) ... end;
-        ...
+        __add = function (o1, o2) --[[...]] end;
+        -- ...
     };
 }
 
@@ -39,7 +47,11 @@ print(o1 + o2)              -- table-structure operators
 - class memeber functions are public, and called with **`:`**
 - constructor **`['<']`** is optional, and called when creating a new object
 - destructor **`['>']`** is optional, and called by lua's garbage collector
-- operator table **`['^']`** is optional, based on lua's meta-methods. 
+- operator table **`['^']`** is optional, based on lua's meta-methods.
+
+# Features
+
+We will demonstrate the OO features with simple examples.
 
 **Example: Initialization**
 
@@ -246,9 +258,10 @@ then error('Class QA failed.', 1) end
 The constructors and destructors through inheritance are called in chain.
 Only single parent inheritance is supported.
 
-- **class:parent(o)** returns the parent class (its object creator)
-- **class:new(o)** returns the duplicate object after calling the constructor
-- **class:copy(o)** returns the duplicate object without calling the constructor
+aux function|description
+**class:parent(o)**|returns the parent class (its object creator)
+**class:new(o)**|returns the duplicate object after calling the constructor
+**class:copy(o)**|returns the duplicate object without calling the constructor
 
 **Example: Release/Reset/Recover**
 
@@ -274,7 +287,7 @@ print(v.value)      --> 2
 
 **Example: Table Value (including Object Value) Again**
 
-Since table value is lightly copy for objects in initialization
+Since table value is lightly copied for objects in initialization
 if table value is used in the class template,
 it will be reset to *false* when assigned nil.
 There is no way to invoke initialization again for member variables.
@@ -335,7 +348,7 @@ v = nil         --> main object is gone
                 --> base object is gone
 ```
 
-## Notice
+# Notice
 
 Lua is a scripting language, not a strong type programming language.
 If you are a hardcore object-oriented programer seeking
@@ -386,7 +399,9 @@ print(o.field)      --> 1
 o:func1()           --> 1
 ```
 
-The `tostring` function will return object's class table hash number.
+In class template operator table `['^']`,
+the `__metatable` value will be used for class name; otherwise, it will be removed, since object metatable should be available all the time.
+The `__tostring` function will return object's class table hash number by default.
 
 
 Please check out many applications in the 'examples' folder, and the files in 'doc' folder, too.

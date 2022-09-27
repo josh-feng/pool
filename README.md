@@ -259,6 +259,7 @@ The constructors and destructors through inheritance are called in chain.
 Only single parent inheritance is supported.
 
 aux function|description
+------|------
 **class:parent(o)**|returns the parent class (its object creator)
 **class:new(o)**|returns the duplicate object after calling the constructor
 **class:copy(o)**|returns the duplicate object without calling the constructor

@@ -1,5 +1,5 @@
 package = "pool"
-version = "2.4-2"
+version = "2.4-1"
 source = {
    url = "git+https://github.com/josh-feng/pool",
    tag = "v2.4",

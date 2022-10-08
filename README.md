@@ -12,6 +12,8 @@ Lua version >= 5.1 is required to use this module. There are 2 ways to install t
 
 - Luarocks package is available in <https://luarocks.org/modules/josh-feng/pool>
 
+> \$ luarocks install pool
+
 # Usage Paradigm
 
 The design is to use the module returned value as the *keyword* '**class**' for defining classes.
@@ -45,9 +47,14 @@ print(o1 + o2)              -- table-structure operators
 
 - class variables are public, and addressed with **`.`**
 - class memeber functions are public, and called with **`:`**
-- constructor **`['<']`** is optional, and called when creating a new object
-- destructor **`['>']`** is optional, and called by lua's garbage collector
-- operator table **`['^']`** is optional, based on lua's meta-methods.
+
+There are 3 special assignments in a class template:
+
+entry | description
+------|------
+ **`['<']`** | constructor is optional, and called when creating a new object
+ **`['>']`** | destructor is optional, and called by lua's garbage collector
+ **`['^']`** | operator table is optional, based on lua's meta-methods
 
 # Features
 

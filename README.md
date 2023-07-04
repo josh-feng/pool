@@ -56,7 +56,17 @@ entry | description
  **`['>']`** | destructor is optional, and called by lua's garbage collector
  **`['^']`** | operator table is optional, based on lua's meta-methods
 
+To help writing class functions,
+the following 3 functions provide some convenience.
+
+aux function|description
+------|------
+**class:parent(o)**|returns the parent *class* (its object creator)
+**class:new(o)**|returns the duplicate object after calling the constructor
+**class:copy(o)**|returns the duplicate object without calling the constructor
+
 # Features
+
 
 We will demonstrate the OO features with simple examples.
 
@@ -264,12 +274,6 @@ then error('Class QA failed.', 1) end
 
 The constructors and destructors through inheritance are called in chain.
 Only single parent inheritance is supported.
-
-aux function|description
-------|------
-**class:parent(o)**|returns the parent class (its object creator)
-**class:new(o)**|returns the duplicate object after calling the constructor
-**class:copy(o)**|returns the duplicate object without calling the constructor
 
 **Example: Release/Reset/Recover**
 

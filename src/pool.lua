@@ -2,7 +2,8 @@
 -- ====================================================================== --
 -- POOL (Poorman's object-oriented lua)    MIT License (c) 2022 Josh Feng --
 -- design:
--- tmpl --> __index = {
+-- tmpl --> {
+--  __index = object fields and member functions
 --  [0] = entries with table value
 --  [1] = creator
 --  [2] = class name

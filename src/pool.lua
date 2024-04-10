@@ -8,8 +8,8 @@
 --  [1] = creator
 --  [2] = class name
 -- }
-local pairs, error, tostring, type, getmetatable, setmetatable, rawset, next =
-      pairs, error, tostring, type, getmetatable, setmetatable, rawset, next
+local pairs, error, tostring, type, getmetatable, setmetatable, rawset =
+      pairs, error, tostring, type, getmetatable, setmetatable, rawset
 local strmatch = string.match
 
 --- deep copy a string-key-ed table
@@ -63,24 +63,24 @@ local function polymorphism (o, mt, ...) -- {{{
     if mt['<'] then mt['<'](o, ...) end -- rawget is not necessary
 end -- }}}
 
-local class = { -- class records
-    copy = function (c, o) -- duplicate the object o
-        return dupTbl(o, getmetatable(o) or error('bad object', 2))
-    end;
-}
+local class = {} -- class records
+
+function class:copy (o) -- duplicate the object o
+    return dupTbl(o, getmetatable(o) or error('bad object', 2))
+end
 
 --- create a new object of the class
 -- @param o An object that associates the class
 function class:new (o, ...) -- {{{
     o = (getmetatable(o) or error('bad object', 2))[1] -- class (object creator)
-    if type(self[o]) ~= 'table' then error('bad object', 2) end
+    if type(class[o]) ~= 'table' then error('bad object', 2) end
     return o(...)
 end -- }}}
 
 --- find the parent class of a class (object)
 -- @param o An object or its class
 function class:parent (o) -- {{{
-    o = (type(o) == 'table' and getmetatable(o) or self[o]) or error('bad object/class', 2)
+    o = (type(o) == 'table' and getmetatable(o) or class[o]) or error('bad object/class', 2)
     o = getmetatable(o.__index)
     return o and o[1] -- parent class (object creator)
 end -- }}}
@@ -91,7 +91,7 @@ local function __tostring (o) return getmetatable(o)[2] end
 -- @param tmpl The class template
 -- @param creator The parent class
 local function __class (tmpl, creator) -- {{{
-    if 'table' ~= type(tmpl) then error('Class declaration:'..tostring(t), 2) end
+    if 'table' ~= type(tmpl) then error('Class declaration:'..tostring(tmpl), 2) end
     if tmpl['<'] and type(tmpl['<']) ~= 'function' then error(' bad constructor', 2) end
     if tmpl['>'] and type(tmpl['>']) ~= 'function' then error(' bad destructor', 2) end
     if tmpl['^'] and type(tmpl['^']) ~= 'table' then error(' bad operators', 2) end
@@ -128,18 +128,16 @@ local function __class (tmpl, creator) -- {{{
     end
     omt.__index = tmpl
 
-    omt[0] = {} -- default table value and recovery
     for k, v in pairs(tmpl) do
         if type(v) == 'table' then
+            omt[0] = omt[0] or {} -- default table value and recovery
             omt[0][k] = v
             tmpl[k] = false -- table-value when reset w/ nil
         end
     end
-    if not next(omt[0]) then omt[0] = nil end
 
     creator = function (...) -- {{{ class/object-creator
-        local o = {}
-        setmetatable(o, omt) -- need member functions
+        local o = setmetatable({}, omt) -- need member functions
         polymorphism(o, omt, ...)
         return o -- the object
     end -- }}}
@@ -148,13 +146,12 @@ local function __class (tmpl, creator) -- {{{
     return creator
 end; -- }}}
 
-setmetatable(class, {
+return setmetatable({}, {
     __metatable = "$Id:$";
     __call = function (c, cls) -- wrap the inheritance
         return type(cls) == 'function' and function (tpl) return __class(tpl, c[cls]) end or __class(cls)
     end;
+    __index = class;
 })
-
-return class
 -- ====================================================================== --
--- vim:ts=4:sw=4:sts=4:et:fen:fdm=marker:fmr={{{,}}}:fdl=1
+-- vim:ts=4:sw=4:sts=4:et:fdm=marker:fdl=1:sbr=-->

@@ -85,6 +85,21 @@ function class:parent (o) -- {{{
     return o and o[1] -- parent class (object creator)
 end -- }}}
 
+--- cast object to a class
+-- @param o Source object
+-- @param c Target class
+function class:cast (o, c, extra) -- {{{
+    c = class[c] or error('bad class', 2)
+    extra = type(extra) == 'table' and extra
+    for k, v in pairs(setmetatable(o, nil)) do
+        if type(k) ~= 'number' or c.__index[k] == nil then
+            o[k] = nil
+            if extra then extra[k] = v end
+        end
+    end
+    return setmetatable(o, c)
+end -- }}}
+
 local function __tostring (o) return getmetatable(o)[2] end
 
 --- declare the class based on the template

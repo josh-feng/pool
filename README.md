@@ -57,13 +57,14 @@ entry | description
  **`['^']`** | operator table is optional, based on lua's meta-methods
 
 To help writing class functions,
-the following 3 functions provide some convenience.
+the following functions provide some convenience.
 
 aux function|description
 ------|------
 **class:parent(o)**|returns the parent *class* (its object creator)
 **class:new(o)**|returns the duplicate object after calling the constructor
 **class:copy(o)**|returns the duplicate object without calling the constructor
+**class:cast(o, c)**|cast the table o to a new class c
 
 # Features
 
@@ -391,7 +392,9 @@ o:method()      --> version 2
 
 The `class` table provides a mechanism to access class templates
 (i.e. object's meta-table).
-Extending/Modifying classes is still possible after they are defined:
+Extending/Modifying classes is still possible after they are defined;
+however, this kind of monkey-patch is discouraged:
+
 
 ```lua
 class = require('pool')
@@ -412,7 +415,7 @@ o:func1()           --> 1
 ```
 
 In class template operator table `['^']`,
-the `__metatable` value will be used for class name; otherwise, it will be removed, since object metatable should be available all the time.
+the `__metatable` value will be used for class name, and then, it will be removed, since object metatable should be available all the time.
 The `__tostring` function will return object's class table hash number by default.
 
 
